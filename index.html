@@ -53,6 +53,7 @@
   </div>
 
   <script>
+    // Toujours afficher la bannière cookies pour les tests
     localStorage.removeItem("cookiesAccepted");
 
     function acceptCookies() {
@@ -78,10 +79,11 @@
             formId: "1262a4d1-1496-4553-b70d-64bc1e676047",
             target: "#formulaire",
             onFormReady: function($form) {
-              const pageNameField = $form.querySelector('input[name="pageName"]');
-              if (pageNameField) {
-                pageNameField.value = "Formulaire";
-              }
+              const inputPageName = document.createElement("input");
+              inputPageName.type = "hidden";
+              inputPageName.name = "pageName";
+              inputPageName.value = "Formulaire";
+              $form.appendChild(inputPageName);
             }
           });
         } else {
