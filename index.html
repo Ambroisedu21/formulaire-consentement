@@ -58,7 +58,7 @@
         localStorage.setItem("cookieConsent", "true");
         // Charger le script HubSpot uniquement après consentement
         const script = document.createElement('script');
-        script.src = "https://js.hs-scripts.com/TON_PORTAIL_ID.js";
+        script.src = "https://js.hs-scripts.com/49153213.js";
         script.async = true;
         document.head.appendChild(script);
       } else {
@@ -94,7 +94,7 @@
       }
 
       try {
-        const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/TON_PORTAIL_ID/TON_ID_FORMULAIRE", {
+        const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bcle676047", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
