@@ -1,73 +1,36 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Formulaire RGPD avec Axeptio</title>
-</head>
-<body>
-  <form id="hubspot-form">
-    <label>Prénom : <input type="text" name="firstname" required></label><br>
-    <label>Nom : <input type="text" name="lastname" required></label><br>
-    <label>Email : <input type="email" name="email" required></label><br>
-    <button type="submit">Envoyer</button>
-  </form>
+<script>
+  window.axeptioSettings = {
+    clientId: "6880d227f0b041d2ff94a814",
+    cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
+  };
+</script>
+<script async src="https://static.axept.io/sdk.js"></script>
 
-  <script>
-    const portalId = '44344318';
-    const formId = '4b18f182-dbe4-4607-9f62-ef4961f18f38';
+<script>
+  window._axcb = window._axcb || [];
+  window._axcb.push(function(axeptio) {
+    axeptio.on("cookies:complete", function(choices) {
+      // L'utilisateur a accepté les cookies HubSpot ?
+      if (choices?.hubspot === true) {
+        // Charger le script d'embed HubSpot manuellement
+        const s = document.createElement("script");
+        s.src = "https://js.hsforms.net/forms/embed/49153213.js";
+        s.defer = true;
+        document.head.appendChild(s);
 
-    // Soumission du formulaire
-    document.getElementById('hubspot-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
-
-      const formData = new FormData(this);
-      const fields = [];
-      formData.forEach((value, name) => {
-        fields.push({ name, value });
-      });
-
-      // Envoi vers HubSpot via API
-      await fetch(`https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields,
-          context: {} // Pas de cookies si non acceptés
-        })
-      });
-
-      alert('Formulaire soumis avec succès !');
+        // Une fois chargé, afficher le formulaire
+        s.onload = function() {
+          hbspt.forms.create({
+            region: "na1",
+            portalId: "49153213",
+            formId: "1262a4d1-1496-4553-b70d-64bc1e676047",
+            target: ".hs-form-frame"
+          });
+        };
+      }
     });
-  </script>
+  });
+</script>
 
-  <!-- Axeptio SDK -->
-  <script>
-    window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
-    };
-
-    (function (d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true; e.src = "//static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e, t);
-    })(document, "script");
-  </script>
-
-  <!-- Injection cookies HubSpot uniquement après consentement -->
-  <script>
-    window._axcb = window._axcb || [];
-    window._axcb.push(function (axeptio) {
-      axeptio.on("cookies:complete", function (choices) {
-        if (choices && choices.hubspot === true) {
-          // L'utilisateur a consenti : on injecte les cookies HubSpot
-          const script = document.createElement('script');
-          script.src = "https://js.hs-scripts.com/44344318.js";
-          script.async = true;
-          document.body.appendChild(script);
-        }
-      });
-    });
-  </script>
-</body>
-</html>
+<!-- Zone d'affichage du formulaire -->
+<div class="hs-form-frame"></div>
