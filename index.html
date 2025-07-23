@@ -1,124 +1,125 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Formulaire HubSpot RGPD-compliant</title>
+  <meta charset="UTF-8">
+  <title>Formulaire RGPD HubSpot</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    .cookie-banner {
-      position: fixed; bottom: 0; left: 0; width: 100%;
-      background: #f0f0f0; padding: 1em; border-top: 1px solid #ccc;
-      text-align: center; z-index: 9999;
-    }
+    body { font-family: sans-serif; padding: 2rem; }
     .hidden { display: none; }
-    form label { display: block; margin-top: 1em; }
-    form input[type="text"], form input[type="email"] {
-      width: 100%; padding: .5em; margin-top: .2em;
-    }
-    form button { margin-top: 1em; padding: .5em 1em; }
-    .message { margin-top: 1em; font-weight: bold; }
+    #cookie-banner { background: #f0f0f0; padding: 1rem; margin-bottom: 2rem; border: 1px solid #ccc; }
+    label { display: block; margin-top: 1rem; }
+    input[type="text"], input[type="email"] { width: 300px; padding: 0.5rem; }
   </style>
 </head>
 <body>
-  <h1>Formulaire de contact</h1>
-  <div id="formulaire"></div>
 
-  <div id="cookie-banner" class="cookie-banner">
-    Ce site utilise des cookies à des fins de mesure et de personnalisation. Acceptez-vous ?<br><br>
+  <h1>Formulaire de contact</h1>
+
+  <div id="cookie-banner">
+    Ce site utilise des cookies. Acceptez-vous leur utilisation ?
     <button onclick="acceptCookies()">Accepter</button>
-    <button onclick="rejectCookies()">Refuser</button>
+    <button onclick="declineCookies()">Refuser</button>
   </div>
 
+  <form id="contact-form" class="hidden">
+    <label>Prénom :
+      <input type="text" name="firstname" required>
+    </label>
+    <label>Nom :
+      <input type="text" name="lastname" required>
+    </label>
+    <label>Email :
+      <input type="email" name="email" required>
+    </label>
+
+    <p>
+      <input type="checkbox" id="consent" required>
+      En cliquant sur envoyer ci-dessous vous autorisez l'entreprise Ambroise Training à stocker et traiter les données personnelles soumises ci-dessus qu'elle vous fournisse le contenu demandé.
+    </p>
+
+    <button type="submit">Envoyer</button>
+  </form>
+
+  <div id="response-message"></div>
+
   <script>
-    // Toujours réinitialiser pour tests
-    localStorage.removeItem('cookiesAccepted');
+    const form = document.getElementById('contact-form');
+    const message = document.getElementById('response-message');
+
+    // Gestion consentement
+    const accepted = localStorage.getItem('cookiesAccepted');
+
+    if (accepted === 'true') {
+      loadHubSpot();
+      form.classList.remove('hidden');
+      document.getElementById('cookie-banner').style.display = 'none';
+    } else if (accepted === 'false') {
+      form.classList.remove('hidden'); // on peut envoyer sans tracking
+      document.getElementById('cookie-banner').style.display = 'none';
+    }
 
     function acceptCookies() {
       localStorage.setItem('cookiesAccepted', 'true');
-      injectTracking();
-      loadEmbedForm();
-      document.getElementById('cookie-banner').classList.add('hidden');
+      loadHubSpot();
+      document.getElementById('cookie-banner').style.display = 'none';
+      form.classList.remove('hidden');
     }
 
-    function rejectCookies() {
+    function declineCookies() {
       localStorage.setItem('cookiesAccepted', 'false');
-      loadApiForm();
-      document.getElementById('cookie-banner').classList.add('hidden');
+      document.getElementById('cookie-banner').style.display = 'none';
+      form.classList.remove('hidden');
     }
 
-    function injectTracking() {
-      const s = document.createElement('script');
-      s.src = 'https://js.hs-scripts.com/49153213.js';
-      s.async = true;
-      document.body.appendChild(s);
+    function loadHubSpot() {
+      const script = document.createElement('script');
+      script.src = 'https://js.hs-scripts.com/49153213.js'; // remplace avec ton portal ID
+      script.async = true;
+      script.type = 'text/javascript';
+      script.onload = () => console.log('HubSpot script chargé');
+      document.body.appendChild(script);
     }
 
-    function loadEmbedForm() {
-      const s = document.createElement('script');
-      s.src = 'https://js.hsforms.net/forms/v2.js';
-      s.onload = () => {
-        if (window.hbspt && hbspt.forms) {
-          hbspt.forms.create({
-            region: 'na1',
-            portalId: '49153213',
-            formId: '1262a4d1-1496-4553-b70d-64bc1e676047',
-            target: '#formulaire',
-            onFormReady: form => {
-              const input = form.querySelector('input[name="pageName"]');
-              if (input) input.value = 'Formulaire';
-            }
-          });
+    // Soumission du formulaire via API
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const data = {
+        fields: [
+          { name: "firstname", value: form.firstname.value },
+          { name: "lastname", value: form.lastname.value },
+          { name: "email", value: form.email.value }
+        ],
+        context: {
+          pageUri: window.location.href,
+          pageName: document.title,
+          hutk: localStorage.getItem('cookiesAccepted') === 'true' ? getCookie("hubspotutk") : null
         }
       };
-      document.body.appendChild(s);
-    }
 
-    function loadApiForm() {
-      document.getElementById('formulaire').innerHTML = `
-        <form id="apiForm">
-          <label>Prénom:<input type="text" name="firstname" required></label>
-          <label>Nom:<input type="text" name="lastname" required></label>
-          <label>Email:<input type="email" name="email" required></label>
-          <label><input type="checkbox" name="consent" required>
-            En cliquant sur envoyer... (mention RGPD)
-          </label>
-          <button type="submit">Envoyer</button>
-        </form>
-        <div class="message" id="message"></div>
-      `;
+      try {
+        const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/49153213/1e7f2630-56a1-48a1-a4e6-eced1e4ffb83", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
 
-      document.getElementById('apiForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const f = e.target;
-        const data = {
-          fields: [
-            { name: 'firstname', value: f.firstname.value },
-            { name: 'lastname', value: f.lastname.value },
-            { name: 'email', value: f.email.value }
-          ],
-          context: {
-            pageUri: window.location.href,
-            pageName: 'Formulaire'
-          }
-        };
-        try {
-          const res = await fetch(
-            'https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bc1e676047',
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data)
-            }
-          );
-          const text = await res.text();
-          document.getElementById('message').textContent = res.ok ? 
-            'Envoyé avec succès !' : 'Erreur: ' + text;
-        } catch (err) {
-          document.getElementById('message').textContent = 'Erreur réseau';
+        if (response.ok) {
+          message.innerHTML = "<p>✅ Formulaire envoyé avec succès !</p>";
+          form.reset();
+        } else {
+          message.innerHTML = "<p>❌ Une erreur est survenue.</p>";
         }
-      });
+      } catch (err) {
+        message.innerHTML = `<p>❌ Erreur technique : ${err.message}</p>`;
+      }
+    });
+
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
     }
   </script>
+
 </body>
 </html>
