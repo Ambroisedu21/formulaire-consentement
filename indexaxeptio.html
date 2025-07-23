@@ -3,29 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Formulaire de contact</title>
-  <script>
-    window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
-      googleConsentMode: {
-        default: {
-          analytics_storage: "denied",
-          ad_storage: "denied",
-          ad_user_data: "denied",
-          ad_personalization: "denied",
-          wait_for_update: 500
-        }
-      }
-    };
-    (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true; e.src = "//static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e, t);
-    })(document, "script");
-  </script>
 </head>
-
 <body>
+
   <h1>Formulaire de contact</h1>
   <form id="contact-form">
     <label>Prénom :<br><input type="text" name="firstname" required></label><br><br>
@@ -40,18 +20,17 @@
     <button type="submit">Envoyer</button>
   </form>
 
+  <!-- Script d'envoi à HubSpot via API -->
   <script>
     document.getElementById("contact-form").addEventListener("submit", async function(event) {
       event.preventDefault();
 
-      // Vérifie si l'utilisateur a donné son consentement
       const consentCheckbox = document.getElementById("consent");
       if (!consentCheckbox.checked) {
         alert("Vous devez accepter le traitement des données.");
         return;
       }
 
-      // Données du formulaire
       const formData = new FormData(event.target);
       const data = {
         fields: [
@@ -61,7 +40,6 @@
         ]
       };
 
-      // Envoi via l’API HubSpot
       try {
         const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/143390112/89fd3ae0-e5e3-4e28-aecf-418ae71a9c96", {
           method: "POST",
@@ -70,16 +48,69 @@
         });
 
         if (response.ok) {
-          alert("Formulaire envoyé avec succès !");
+          alert("Formulaire envoyé !");
           event.target.reset();
         } else {
-          alert("Une erreur est survenue.");
+          alert("Erreur lors de l'envoi.");
         }
       } catch (error) {
-        console.error("Erreur : ", error);
-        alert("Une erreur réseau est survenue.");
+        alert("Erreur réseau.");
+        console.error(error);
       }
     });
   </script>
+
+  <!-- Bannière personnalisée minimale simulant Axeptio -->
+  <div id="cookie-banner" style="position:fixed;bottom:0;left:0;right:0;background:#f0f0f0;padding:10px;display:flex;justify-content:space-between;align-items:center;">
+    <span>Ce site utilise des cookies. Acceptez-vous leur usage ?</span>
+    <div>
+      <button onclick="acceptCookies()">Accepter</button>
+      <button onclick="refuseCookies()">Refuser</button>
+    </div>
+  </div>
+
+  <!-- Script Axeptio chargé uniquement après consentement -->
+  <script>
+    function acceptCookies() {
+      localStorage.setItem("cookies_accepted", "true");
+      document.getElementById("cookie-banner").style.display = "none";
+
+      // Injection différée du SDK Axeptio
+      window.axeptioSettings = {
+        clientId: "6880d227f0b041d2ff94a814",
+        cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
+        googleConsentMode: {
+          default: {
+            analytics_storage: "denied",
+            ad_storage: "denied",
+            ad_user_data: "denied",
+            ad_personalization: "denied",
+            wait_for_update: 500
+          }
+        }
+      };
+
+      var e = document.createElement("script");
+      e.src = "https://static.axept.io/sdk.js";
+      e.async = true;
+      document.head.appendChild(e);
+    }
+
+    function refuseCookies() {
+      localStorage.setItem("cookies_accepted", "false");
+      document.getElementById("cookie-banner").style.display = "none";
+    }
+
+    // Vérification à chaque chargement
+    window.addEventListener("DOMContentLoaded", () => {
+      const accepted = localStorage.getItem("cookies_accepted");
+      if (accepted === "true") {
+        acceptCookies();
+      } else if (accepted === "false") {
+        document.getElementById("cookie-banner").style.display = "none";
+      }
+    });
+  </script>
+
 </body>
 </html>
