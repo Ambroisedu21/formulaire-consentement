@@ -1,36 +1,87 @@
-<script>
-  window.axeptioSettings = {
-    clientId: "6880d227f0b041d2ff94a814",
-    cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
-  };
-</script>
-<script async src="https://static.axept.io/sdk.js"></script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulaire RGPD compliant avec Axeptio & HubSpot</title>
+  <script>
+    // Initialisation Axeptio
+    window.axeptioSettings = {
+      clientId: "6880d227f0b041d2ff94a814", // Ton ID projet Axeptio
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
+    };
 
-<script>
-  window._axcb = window._axcb || [];
-  window._axcb.push(function(axeptio) {
-    axeptio.on("cookies:complete", function(choices) {
-      // L'utilisateur a accepté les cookies HubSpot ?
-      if (choices?.hubspot === true) {
-        // Charger le script d'embed HubSpot manuellement
-        const s = document.createElement("script");
-        s.src = "https://js.hsforms.net/forms/embed/49153213.js";
-        s.defer = true;
-        document.head.appendChild(s);
+    (function(d, s) {
+      var t = d.getElementsByTagName(s)[0],
+          e = d.createElement(s);
+      e.async = true;
+      e.src = "//static.axept.io/sdk.js";
+      t.parentNode.insertBefore(e, t);
+    })(document, "script");
 
-        // Une fois chargé, afficher le formulaire
-        s.onload = function() {
-          hbspt.forms.create({
-            region: "na1",
-            portalId: "49153213",
-            formId: "1262a4d1-1496-4553-b70d-64bc1e676047",
-            target: ".hs-form-frame"
-          });
-        };
+    // Fonction appelée quand cookies acceptés
+    window._axcb = window._axcb || [];
+    window._axcb.push(function(axeptio) {
+      axeptio.on("cookies:complete", function(choices) {
+        if (choices && choices.hubspot === true) {
+          var hsScript = document.createElement("script");
+          hsScript.src = "https://js.hs-scripts.com/49153213.js";
+          hsScript.async = true;
+          document.head.appendChild(hsScript);
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+
+  <h2>Formulaire de contact</h2>
+  <form id="hubspot-form">
+    <label for="prenom">Prénom :</label>
+    <input type="text" id="prenom" name="prenom" required><br>
+
+    <label for="nom">Nom :</label>
+    <input type="text" id="nom" name="nom" required><br>
+
+    <label for="email">Email :</label>
+    <input type="email" id="email" name="email" required><br>
+
+    <button type="submit">Envoyer</button>
+  </form>
+
+  <p id="resultat"></p>
+
+  <script>
+    document.getElementById("hubspot-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const portalId = "49153213"; // Remplace avec ton vrai Portal ID
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047"; // Remplace avec ton vrai Form ID
+      const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+
+      const data = {
+        fields: [
+          { name: "firstname", value: document.getElementById("prenom").value },
+          { name: "lastname", value: document.getElementById("nom").value },
+          { name: "email", value: document.getElementById("email").value }
+        ]
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const resText = await response.text();
+        document.getElementById("resultat").textContent = response.ok
+          ? "Formulaire envoyé avec succès !"
+          : `Erreur lors de l'envoi : ${resText}`;
+      } catch (err) {
+        document.getElementById("resultat").textContent = `Erreur réseau : ${err.message}`;
       }
     });
-  });
-</script>
+  </script>
 
-<!-- Zone d'affichage du formulaire -->
-<div class="hs-form-frame"></div>
+</body>
+</html>
