@@ -5,6 +5,7 @@
   <title>Formulaire de contact</title>
 </head>
 <body>
+
   <h1>Formulaire de contact</h1>
   <form id="contact-form">
     <label>Prénom :<br><input type="text" name="firstname" required></label><br><br>
@@ -19,63 +20,53 @@
     <button type="submit">Envoyer</button>
   </form>
 
-  <!-- Axeptio config -->
+  <!-- Axeptio -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
-      googleConsentMode: {
-        default: {
-          analytics_storage: "denied",
-          ad_storage: "denied",
-          ad_user_data: "denied",
-          ad_personalization: "denied",
-          wait_for_update: 500
-        }
-      }
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
+    (function(d, s) {
+      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      e.async = true;
+      e.src = "https://static.axept.io/sdk.js";
+      t.parentNode.insertBefore(e, t);
+    })(document, "script");
   </script>
-  <script async src="https://static.axept.io/sdk.js"></script>
 
-  <!-- Script logique -->
   <script>
-    let hubspotAuthorized = false;
+    let trackingEnabled = false;
 
-    // Écoute les choix cookies
+    // Écoute le choix de consentement à Axeptio
     window._axcb = window._axcb || [];
-    window._axcb.push(function(axeptio) {
-      axeptio.on("cookies:complete", function(choices) {
-        if (choices["hubspot"]) {
-          hubspotAuthorized = true;
-          console.log("Consentement HubSpot accordé ✅");
+    window._axcb.push(function (axeptio) {
+      axeptio.on("cookies:complete", function (choices) {
+        if (choices && choices["hubspot"]) {
+          trackingEnabled = true;
 
-          // Injection dynamique du script HubSpot de tracking
-          const hsScript = document.createElement("script");
-          hsScript.src = "https://js.hs-scripts.com/143390112.js";
-          hsScript.async = true;
-          document.head.appendChild(hsScript);
-        } else {
-          console.log("Consentement HubSpot refusé ❌");
+          // Injection des cookies de tracking HubSpot uniquement si accepté
+          const script = document.createElement("script");
+          script.src = "https://js.hs-scripts.com/143390112.js"; // Ton Portal ID ici
+          script.type = "text/javascript";
+          script.async = true;
+          document.head.appendChild(script);
         }
       });
     });
 
-    // Gestion de l'envoi de formulaire
+    // Envoi du formulaire via API HubSpot, toujours
     document.getElementById("contact-form").addEventListener("submit", async function(event) {
       event.preventDefault();
 
-      if (!hubspotAuthorized) {
-        alert("Vous devez accepter les cookies HubSpot pour envoyer ce formulaire.");
-        return;
-      }
-
+      const form = event.target;
       const consentCheckbox = document.getElementById("consent");
+
       if (!consentCheckbox.checked) {
-        alert("Vous devez cocher la case de consentement.");
+        alert("Vous devez accepter le traitement des données.");
         return;
       }
 
-      const formData = new FormData(event.target);
+      const formData = new FormData(form);
       const data = {
         fields: [
           { name: "firstname", value: formData.get("firstname") },
@@ -83,6 +74,15 @@
           { name: "email", value: formData.get("email") }
         ]
       };
+
+      // Si tracking autorisé, ajouter contextualisation
+      if (trackingEnabled && window._hsq) {
+        data.context = {
+          hutk: document.cookie.match(/hubspotutk=([^;]+)/)?.[1] || null,
+          pageUri: window.location.href,
+          pageName: document.title
+        };
+      }
 
       try {
         const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/143390112/89fd3ae0-e5e3-4e28-aecf-418ae71a9c96", {
@@ -93,15 +93,16 @@
 
         if (response.ok) {
           alert("Formulaire envoyé !");
-          event.target.reset();
+          form.reset();
         } else {
-          alert("Erreur lors de l'envoi.");
+          alert("Erreur lors de l'envoi (HubSpot API).");
         }
-      } catch (error) {
-        alert("Erreur réseau.");
-        console.error(error);
+      } catch (err) {
+        console.error("Erreur réseau", err);
+        alert("Erreur réseau lors de l'envoi.");
       }
     });
   </script>
+
 </body>
 </html>
