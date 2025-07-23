@@ -2,62 +2,82 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Formulaire de contact RGPD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulaire de contact - RGPD Compliant</title>
 </head>
 <body>
+
   <h1>Formulaire de contact</h1>
 
-  <form id="contactForm">
-    <label>Prénom : <input type="text" name="firstname" required /></label><br/>
-    <label>Nom : <input type="text" name="lastname" required /></label><br/>
-    <label>Email : <input type="email" name="email" required /></label><br/>
+  <form id="contact-form">
+    <label>Prénom :
+      <input type="text" name="firstname" required />
+    </label><br>
+
+    <label>Nom :
+      <input type="text" name="lastname" required />
+    </label><br>
+
+    <label>Email :
+      <input type="email" name="email" required />
+    </label><br>
 
     <label>
-      <input type="checkbox" id="consentCheckbox" required />
+      <input type="checkbox" id="consent" required />
       En cliquant sur envoyer ci-dessous vous autorisez l'entreprise Ambroise Training à stocker et traiter les données personnelles soumises ci-dessus qu'elle vous fournisse le contenu demandé.
-    </label><br/>
+    </label><br><br>
 
     <button type="submit">Envoyer</button>
   </form>
 
-  <div id="result"></div>
+  <div id="consent-banner" style="margin-top: 40px;">
+    <p>Ce site utilise des cookies à des fins de mesure et d'analyse. Acceptez-vous ?</p>
+    <button onclick="acceptCookies()">Accepter</button>
+    <button onclick="refuseCookies()">Refuser</button>
+  </div>
 
   <script>
-    document.getElementById("contactForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
+    let hasConsent = false;
 
-      const consentGiven = document.getElementById("consentCheckbox").checked;
-      if (!consentGiven) {
-        alert("Veuillez accepter la mention de consentement.");
+    function acceptCookies() {
+      hasConsent = true;
+      document.getElementById('consent-banner').style.display = 'none';
+
+      // (Facultatif) Ajouter ici un chargement JS tracking HubSpot si tu veux, ex :
+      // let s = document.createElement('script');
+      // s.src = 'https://js.hs-scripts.com/49153213.js';
+      // document.body.appendChild(s);
+    }
+
+    function refuseCookies() {
+      hasConsent = false;
+      document.getElementById('consent-banner').style.display = 'none';
+    }
+
+    document.getElementById('contact-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!document.getElementById('consent').checked) {
+        alert("Merci d'accepter la mention avant l'envoi.");
         return;
       }
 
-      const portalId = "49153213";
-      const formId = "1262a4d1-1496-4553-b70d-64bcle676047";
-      const endpoint = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
-
-      const form = e.target;
-      const data = {
+      const formData = {
         fields: [
-          { name: "firstname", value: form.firstname.value },
-          { name: "lastname", value: form.lastname.value },
-          { name: "email", value: form.email.value }
+          { name: "firstname", value: e.target.firstname.value },
+          { name: "lastname", value: e.target.lastname.value },
+          { name: "email", value: e.target.email.value }
         ]
       };
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-
-      if (response.ok) {
-        document.getElementById("result").textContent = "Merci pour votre envoi !";
-        form.reset();
-      } else {
-        document.getElementById("result").textContent = "Erreur lors de l’envoi du formulaire.";
-        console.error(await response.text());
+      try {
+        await fetch("https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bcle676047", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        alert("Merci, votre message a été envoyé !");
+      } catch (error) {
+        alert("Une erreur est survenue.");
       }
     });
   </script>
