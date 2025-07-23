@@ -57,6 +57,15 @@
 
     function acceptCookies() {
       localStorage.setItem("cookiesAccepted", "true");
+
+      // Injecter le script de tracking HubSpot uniquement après acceptation
+      const trackingScript = document.createElement("script");
+      trackingScript.src = "https://js.hs-scripts.com/49153213.js";
+      trackingScript.type = "text/javascript";
+      trackingScript.id = "hs-script-loader";
+      trackingScript.async = true;
+      document.body.appendChild(trackingScript);
+
       loadHubspotForm();
       document.getElementById("cookie-banner").classList.add("hidden");
     }
@@ -104,7 +113,7 @@
           <input type="email" id="email" name="email" required>
 
           <label>
-            <input type="checkbox" id="consent" required>
+            <input type="checkbox" id="consent" required />
             En cliquant sur envoyer ci-dessous vous autorisez l'entreprise Ambroise Training à stocker et traiter les données personnelles soumises ci-dessus qu'elle vous fournisse le contenu demandé.
           </label>
 
@@ -129,26 +138,22 @@
           }
         };
 
-        const portalId = "49153213";
-        const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
-        const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
-
         try {
-          const response = await fetch(url, {
+          const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bc1e676047", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
           });
 
-          const resultText = await response.text();
+          const resText = await response.text();
           if (response.ok) {
             document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
             form.reset();
           } else {
-            document.getElementById("message").textContent = "Erreur lors de l'envoi : " + resultText;
+            document.getElementById("message").textContent = "Erreur lors de l'envoi : " + resText;
           }
         } catch (error) {
-          document.getElementById("message").textContent = "Une erreur est survenue : " + error;
+          document.getElementById("message").textContent = "Une erreur est survenue.";
         }
       });
     }
