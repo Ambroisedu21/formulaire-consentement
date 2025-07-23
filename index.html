@@ -7,7 +7,8 @@
   <style>
     body { font-family: Arial; padding: 2em; }
     .cookie-banner {
-      position: fixed; bottom: 0; width: 100%; background: #eee; padding: 1em; border-top: 1px solid #ccc; text-align: center;
+      position: fixed; bottom: 0; width: 100%; background: #eee;
+      padding: 1em; border-top: 1px solid #ccc; text-align: center;
     }
     .hidden { display: none; }
     form label { display: block; margin-top: 1em; }
@@ -47,16 +48,14 @@
   </div>
 
   <script>
-    // RGPD : ne jamais charger HubSpot par défaut
-    const hubspotScriptLoaded = false;
-
-    // Supprimer cookies HubSpot en cas de refus
     function deleteHubspotCookies() {
-      const cookies = ["hubspotutk", "__hssc", "__hssrc", "__hstc"];
-      cookies.forEach(c => document.cookie = `${c}=; Max-Age=0; path=/; domain=${location.hostname}`);
+      const cookies = ["hubspotutk", "__hssc", "__hssrc", "__hstc", "_cf_bm", "__cf_bm", "_cfuvid"];
+      cookies.forEach(c => {
+        document.cookie = `${c}=; Max-Age=0; path=/; domain=${location.hostname}`;
+        document.cookie = `${c}=; Max-Age=0; path=/; domain=.hubspot.com`;
+      });
     }
 
-    // Charger script HubSpot uniquement si accepté
     function acceptCookies() {
       localStorage.setItem("cookiesAccepted", "true");
       loadHubspotTracking();
@@ -70,14 +69,16 @@
     }
 
     function loadHubspotTracking() {
-      const script = document.createElement("script");
-      script.src = "https://js.hs-scripts.com/49153213.js"; // ne charge que si accepté
-      script.type = "text/javascript";
-      script.defer = true;
-      document.head.appendChild(script);
+      if (!window.hubspotScriptLoaded) {
+        const script = document.createElement("script");
+        script.src = "https://js.hs-scripts.com/49153213.js";
+        script.type = "text/javascript";
+        script.defer = true;
+        document.head.appendChild(script);
+        window.hubspotScriptLoaded = true;
+      }
     }
 
-    // Formulaire : envoi via API
     document.getElementById("contactForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       const form = e.target;
@@ -104,24 +105,23 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
-        if (res.ok) {
-          document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
-          form.reset();
-        } else {
-          document.getElementById("message").textContent = "Erreur lors de l'envoi.";
-        }
-      } catch (err) {
+        document.getElementById("message").textContent = res.ok
+          ? "Formulaire envoyé avec succès !"
+          : "Erreur lors de l'envoi.";
+        if (res.ok) form.reset();
+      } catch {
         document.getElementById("message").textContent = "Erreur réseau.";
       }
     });
 
-    // Affiche la bannière de consentement au chargement
     window.onload = () => {
       const consent = localStorage.getItem("cookiesAccepted");
       if (!consent) {
         document.getElementById("cookie-banner").classList.remove("hidden");
       } else if (consent === "true") {
         loadHubspotTracking();
+      } else {
+        rejectCookies(); // En cas de "false", bien supprimer les cookies à chaque rechargement
       }
     };
   </script>
