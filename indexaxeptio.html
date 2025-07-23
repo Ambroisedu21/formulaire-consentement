@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulaire RGPD</title>
+  <style>
+    body { font-family: Arial; padding: 2em; }
+    .cookie-banner {
+      position: fixed; bottom: 0; width: 100%; background: #eee; padding: 1em; border-top: 1px solid #ccc; text-align: center;
+    }
+    .hidden { display: none; }
+    form label { display: block; margin-top: 1em; }
+    input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
+    button { margin-top: 1em; padding: 0.5em 1em; }
+    .message { margin-top: 1em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Formulaire de contact</h1>
+  <div id="formulaire">
+    <form id="contactForm">
+      <label for="firstname">Prénom :</label>
+      <input type="text" id="firstname" name="firstname" required>
+      
+      <label for="lastname">Nom :</label>
+      <input type="text" id="lastname" name="lastname" required>
+
+      <label for="email">Email :</label>
+      <input type="email" id="email" name="email" required>
+
+      <label style="margin-top: 1em; font-size: 0.9em;">
+        <input type="checkbox" required>
+        En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
+      </label>
+
+      <button type="submit">Envoyer</button>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
+
+  <div id="cookie-banner" class="cookie-banner">
+    Ce site utilise des cookies à des fins de mesure et de personnalisation. Acceptez-vous ?
+    <br><br>
+    <button onclick="acceptCookies()">Accepter</button>
+    <button onclick="rejectCookies()">Refuser</button>
+  </div>
+
+  <script>
+    function deleteHubspotCookies() {
+      const cookies = ["hubspotutk", "__hssc", "__hssrc", "__hstc", "__cf_bm", "__cfduid"];
+      cookies.forEach(c => {
+        document.cookie = `${c}=; Max-Age=0; path=/; domain=${location.hostname}`;
+      });
+    }
+
+    function acceptCookies() {
+      localStorage.setItem("cookiesAccepted", "true");
+      loadHubspotTracking();
+      document.getElementById("cookie-banner").classList.add("hidden");
+    }
+
+    function rejectCookies() {
+      localStorage.setItem("cookiesAccepted", "false");
+      deleteHubspotCookies();
+      document.getElementById("cookie-banner").classList.add("hidden");
+    }
+
+    function loadHubspotTracking() {
+      const script = document.createElement("script");
+      script.src = "https://js.hs-scripts.com/49153213.js";
+      script.type = "text/javascript";
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    // Envoi du formulaire via API HubSpot (sans tracking si refus)
+    document.getElementById("contactForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const cookiesAccepted = localStorage.getItem("cookiesAccepted") === "true";
+
+      const data = {
+        fields: [
+          { name: "firstname", value: form.firstname.value },
+          { name: "lastname", value: form.lastname.value },
+          { name: "email", value: form.email.value }
+        ],
+        context: cookiesAccepted ? {
+          pageUri: window.location.href,
+          pageName: "Formulaire RGPD"
+        } : {} // vide si refusé : aucune donnée contextuelle transmise
+      };
+
+      const portalId = "49153213";
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
+      const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
+          form.reset();
+        } else {
+          document.getElementById("message").textContent = "Erreur lors de l'envoi.";
+        }
+      } catch (err) {
+        document.getElementById("message").textContent = "Erreur réseau.";
+      }
+    });
+
+    // Affiche bannière si pas encore de choix
+    window.onload = () => {
+      const consent = localStorage.getItem("cookiesAccepted");
+      if (!consent) {
+        document.getElementById("cookie-banner").classList.remove("hidden");
+      } else if (consent === "true") {
+        loadHubspotTracking();
+      }
+    };
+  </script>
+</body>
+</html>
