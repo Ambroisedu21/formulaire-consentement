@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Formulaire avec consentement</title>
+  <title>Formulaire HubSpot avec Consentement</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -47,29 +47,52 @@
   <div id="formulaire"></div>
 
   <div id="cookie-banner" class="cookie-banner">
-    Ce site utilise des cookies à des fins de personnalisation. Acceptez-vous ?<br /><br />
+    Ce site utilise des cookies à des fins de mesure et de personnalisation. Acceptez-vous ?<br /><br />
     <button onclick="acceptCookies()">Accepter</button>
     <button onclick="rejectCookies()">Refuser</button>
   </div>
 
   <script>
-    // Affichage de la bannière à chaque rechargement (pour tests)
     localStorage.removeItem("cookiesAccepted");
 
     function acceptCookies() {
       localStorage.setItem("cookiesAccepted", "true");
-      showForm(true);
+      loadHubspotForm();
       document.getElementById("cookie-banner").classList.add("hidden");
     }
 
     function rejectCookies() {
       localStorage.setItem("cookiesAccepted", "false");
-      showForm(false);
+      loadFallbackForm();
       document.getElementById("cookie-banner").classList.add("hidden");
     }
 
-    function showForm(withTracking) {
-      const formHTML = `
+    function loadHubspotForm() {
+      const script = document.createElement("script");
+      script.src = "https://js.hsforms.net/forms/v2.js";
+      script.onload = () => {
+        if (window.hbspt && window.hbspt.forms) {
+          window.hbspt.forms.create({
+            region: "na1",
+            portalId: "49153213",
+            formId: "1262a4d1-1496-4553-b70d-64bc1e676047",
+            target: "#formulaire",
+            onFormReady: function($form) {
+              const pageNameField = $form.querySelector('input[name="pageName"]');
+              if (pageNameField) {
+                pageNameField.value = "Formulaire";
+              }
+            }
+          });
+        } else {
+          document.getElementById("formulaire").innerHTML = "<p>Erreur : Le formulaire HubSpot n'a pas pu être chargé.</p>";
+        }
+      };
+      document.body.appendChild(script);
+    }
+
+    function loadFallbackForm() {
+      const fallbackHTML = `
         <form id="contactForm">
           <label for="firstname">Prénom :</label>
           <input type="text" id="firstname" name="firstname" required>
@@ -80,17 +103,20 @@
           <label for="email">Email :</label>
           <input type="email" id="email" name="email" required>
 
+          <label>
+            <input type="checkbox" id="consent" required>
+            En cliquant sur envoyer ci-dessous vous autorisez l'entreprise Ambroise Training à stocker et traiter les données personnelles soumises ci-dessus qu'elle vous fournisse le contenu demandé.
+          </label>
+
           <button type="submit">Envoyer</button>
         </form>
         <div class="message" id="message"></div>
       `;
-
-      document.getElementById("formulaire").innerHTML = formHTML;
+      document.getElementById("formulaire").innerHTML = fallbackHTML;
 
       document.getElementById("contactForm").addEventListener("submit", async function (e) {
         e.preventDefault();
         const form = e.target;
-
         const data = {
           fields: [
             { name: "firstname", value: form.firstname.value },
@@ -99,7 +125,7 @@
           ],
           context: {
             pageUri: window.location.href,
-            pageName: "Formulaire"
+            pageName: "Formulaire (sans tracking)"
           }
         };
 
@@ -114,14 +140,15 @@
             body: JSON.stringify(data)
           });
 
+          const resultText = await response.text();
           if (response.ok) {
             document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
             form.reset();
           } else {
-            document.getElementById("message").textContent = "Erreur lors de l'envoi.";
+            document.getElementById("message").textContent = "Erreur lors de l'envoi : " + resultText;
           }
         } catch (error) {
-          document.getElementById("message").textContent = "Une erreur est survenue.";
+          document.getElementById("message").textContent = "Une erreur est survenue : " + error;
         }
       });
     }
