@@ -37,29 +37,30 @@
   </script>
   <script async src="https://static.axept.io/sdk.js"></script>
 
-  <!-- Script d'envoi à HubSpot via API -->
+  <!-- Script logique -->
   <script>
     let hubspotAuthorized = false;
 
-    // Attend que les préférences cookies soient finalisées
+    // Écoute les choix cookies
     window._axcb = window._axcb || [];
     window._axcb.push(function(axeptio) {
       axeptio.on("cookies:complete", function(choices) {
-        if (choices["hubspot"] === true) {
+        if (choices["hubspot"]) {
           hubspotAuthorized = true;
-          console.log("HubSpot autorisé ✅");
+          console.log("Consentement HubSpot accordé ✅");
 
-          // Optionnel : charger le script de tracking HubSpot ici si besoin
-          // const script = document.createElement("script");
-          // script.src = "https://js.hs-scripts.com/143390112.js";
-          // script.async = true;
-          // document.head.appendChild(script);
+          // Injection dynamique du script HubSpot de tracking
+          const hsScript = document.createElement("script");
+          hsScript.src = "https://js.hs-scripts.com/143390112.js";
+          hsScript.async = true;
+          document.head.appendChild(hsScript);
         } else {
-          console.log("HubSpot refusé ❌");
+          console.log("Consentement HubSpot refusé ❌");
         }
       });
     });
 
+    // Gestion de l'envoi de formulaire
     document.getElementById("contact-form").addEventListener("submit", async function(event) {
       event.preventDefault();
 
