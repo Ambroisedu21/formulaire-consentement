@@ -33,7 +33,7 @@
 
   <p id="status" style="margin-top: 15px;"></p>
 
-  <!-- Script Axeptio CMP -->
+  <!-- Script Axeptio -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
@@ -48,7 +48,7 @@
     })(document, "script");
   </script>
 
-  <!-- Script de soumission vers HubSpot (sans tracking, RGPD compliant) -->
+  <!-- Script de soumission vers HubSpot (sans cookies, RGPD compliant) -->
   <script>
     document.getElementById('contact-form').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -65,7 +65,7 @@
         }
       };
 
-      const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/PORTAIL_ID/FORM_ID", {
+      const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/143476219/e4d8a0df-d907-44a3-9629-90d52b6f847b", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
