@@ -1,108 +1,73 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Formulaire de contact</title>
+  <meta charset="UTF-8" />
+  <title>Formulaire RGPD avec Axeptio</title>
 </head>
 <body>
-
-  <h1>Formulaire de contact</h1>
-  <form id="contact-form">
-    <label>Prénom :<br><input type="text" name="firstname" required></label><br><br>
-    <label>Nom :<br><input type="text" name="lastname" required></label><br><br>
-    <label>Email :<br><input type="email" name="email" required></label><br><br>
-
-    <label>
-      <input type="checkbox" id="consent" required>
-      En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
-    </label><br><br>
-
+  <form id="hubspot-form">
+    <label>Prénom : <input type="text" name="firstname" required></label><br>
+    <label>Nom : <input type="text" name="lastname" required></label><br>
+    <label>Email : <input type="email" name="email" required></label><br>
     <button type="submit">Envoyer</button>
   </form>
 
-  <!-- Axeptio -->
+  <script>
+    const portalId = '44344318';
+    const formId = '4b18f182-dbe4-4607-9f62-ef4961f18f38';
+
+    // Soumission du formulaire
+    document.getElementById('hubspot-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const fields = [];
+      formData.forEach((value, name) => {
+        fields.push({ name, value });
+      });
+
+      // Envoi vers HubSpot via API
+      await fetch(`https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields,
+          context: {} // Pas de cookies si non acceptés
+        })
+      });
+
+      alert('Formulaire soumis avec succès !');
+    });
+  </script>
+
+  <!-- Axeptio SDK -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
       cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
-    (function(d, s) {
+
+    (function (d, s) {
       var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true;
-      e.src = "https://static.axept.io/sdk.js";
+      e.async = true; e.src = "//static.axept.io/sdk.js";
       t.parentNode.insertBefore(e, t);
     })(document, "script");
   </script>
 
+  <!-- Injection cookies HubSpot uniquement après consentement -->
   <script>
-    let trackingEnabled = false;
-
-    // Écoute le choix de consentement à Axeptio
     window._axcb = window._axcb || [];
     window._axcb.push(function (axeptio) {
       axeptio.on("cookies:complete", function (choices) {
-        if (choices && choices["hubspot"]) {
-          trackingEnabled = true;
-
-          // Injection des cookies de tracking HubSpot uniquement si accepté
-          const script = document.createElement("script");
-          script.src = "https://js.hs-scripts.com/143390112.js"; // Ton Portal ID ici
-          script.type = "text/javascript";
+        if (choices && choices.hubspot === true) {
+          // L'utilisateur a consenti : on injecte les cookies HubSpot
+          const script = document.createElement('script');
+          script.src = "https://js.hs-scripts.com/44344318.js";
           script.async = true;
-          document.head.appendChild(script);
+          document.body.appendChild(script);
         }
       });
     });
-
-    // Envoi du formulaire via API HubSpot, toujours
-    document.getElementById("contact-form").addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      const form = event.target;
-      const consentCheckbox = document.getElementById("consent");
-
-      if (!consentCheckbox.checked) {
-        alert("Vous devez accepter le traitement des données.");
-        return;
-      }
-
-      const formData = new FormData(form);
-      const data = {
-        fields: [
-          { name: "firstname", value: formData.get("firstname") },
-          { name: "lastname", value: formData.get("lastname") },
-          { name: "email", value: formData.get("email") }
-        ]
-      };
-
-      // Si tracking autorisé, ajouter contextualisation
-      if (trackingEnabled && window._hsq) {
-        data.context = {
-          hutk: document.cookie.match(/hubspotutk=([^;]+)/)?.[1] || null,
-          pageUri: window.location.href,
-          pageName: document.title
-        };
-      }
-
-      try {
-        const response = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/143390112/89fd3ae0-e5e3-4e28-aecf-418ae71a9c96", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-          alert("Formulaire envoyé !");
-          form.reset();
-        } else {
-          alert("Erreur lors de l'envoi (HubSpot API).");
-        }
-      } catch (err) {
-        console.error("Erreur réseau", err);
-        alert("Erreur réseau lors de l'envoi.");
-      }
-    });
   </script>
-
 </body>
 </html>
