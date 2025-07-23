@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Formulaire de contact RGPD</title>
+  <title>Formulaire de contact</title>
 </head>
 <body>
 
@@ -20,39 +20,7 @@
     <button type="submit">Envoyer</button>
   </form>
 
-  <!-- Axeptio native -->
-  <script>
-    window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
-      onConsentChanged: function (consent) {
-        const axeptioConsent = consent?.cookies?.hubspot;
-
-        // ✅ Cookies HubSpot explicitement acceptés → injecter script HS et activer formulaire
-        if (axeptioConsent === true) {
-          loadHubSpotCookies();
-        }
-      }
-    };
-
-    (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true;
-      e.src = "https://static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e, t);
-    })(document, "script");
-
-    function loadHubSpotCookies() {
-      // HubSpot tracking script (à injecter seulement après consentement)
-      var hsScript = document.createElement("script");
-      hsScript.src = "https://js.hs-scripts.com/143390112.js";
-      hsScript.type = "text/javascript";
-      hsScript.async = true;
-      document.head.appendChild(hsScript);
-    }
-  </script>
-
-  <!-- Envoi via API HubSpot -->
+  <!-- Formulaire envoyé via l'API HubSpot sans tracking -->
   <script>
     document.getElementById("contact-form").addEventListener("submit", async function(event) {
       event.preventDefault();
@@ -60,20 +28,6 @@
       const consentCheckbox = document.getElementById("consent");
       if (!consentCheckbox.checked) {
         alert("Vous devez accepter le traitement des données.");
-        return;
-      }
-
-      const cookiesAccepted = window._axcb && window._axcb.some(cb => {
-        try {
-          const c = Axeptio.getConsent();
-          return c?.cookies?.hubspot === true;
-        } catch {
-          return false;
-        }
-      });
-
-      if (!cookiesAccepted) {
-        alert("Veuillez accepter les cookies pour soumettre le formulaire.");
         return;
       }
 
@@ -103,6 +57,31 @@
         alert("Erreur réseau.");
         console.error(error);
       }
+    });
+  </script>
+
+  <!-- Configuration Axeptio -->
+  <script>
+    window.axeptioSettings = {
+      clientId: "6880d227f0b041d2ff94a814",
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
+    };
+  </script>
+  <script async src="https://static.axept.io/sdk.js"></script>
+
+  <!-- Exécution post-consentement via Axeptio -->
+  <script>
+    window._axcb = window._axcb || [];
+    window._axcb.push(function(axeptio) {
+      axeptio.on("cookies:complete", function(choices) {
+        console.log("Choix de consentement :", choices);
+        if (choices["hubspot"]) {
+          var hsScript = document.createElement("script");
+          hsScript.src = "https://js.hs-scripts.com/143390112.js";
+          hsScript.async = true;
+          document.head.appendChild(hsScript);
+        }
+      });
     });
   </script>
 
