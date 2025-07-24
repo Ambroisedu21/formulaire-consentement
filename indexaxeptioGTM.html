@@ -1,142 +1,110 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Formulaire RGPD avec Axeptio + GTM</title>
-
+  <meta charset="UTF-8">
+  <title>Formulaire de contact RGPD</title>
   <!-- Google Tag Manager -->
   <script>
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;
-      j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-      f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-55BBX5K4');
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
+    var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!='dataLayer'?'&l='+l:'';
+    j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+    f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-55BBX5K4');
   </script>
   <!-- End Google Tag Manager -->
 
-  <style>
-    body { font-family: Arial; padding: 2em; }
-    form label { display: block; margin-top: 1em; }
-    input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
-    button { margin-top: 1em; padding: 0.5em 1em; }
-    .message { margin-top: 1em; font-weight: bold; }
-  </style>
-</head>
-<body>
-
-  <!-- Google Tag Manager (noscript) -->
-  <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-55BBX5K4"
-            height="0" width="0" style="display:none;visibility:hidden"></iframe>
-  </noscript>
-  <!-- End Google Tag Manager (noscript) -->
-
-  <h1>Formulaire de contact</h1>
-  <form id="contactForm">
-    <label for="firstname">Prénom :</label>
-    <input type="text" id="firstname" name="firstname" required>
-    
-    <label for="lastname">Nom :</label>
-    <input type="text" id="lastname" name="lastname" required>
-
-    <label for="email">Email :</label>
-    <input type="email" id="email" name="email" required>
-
-    <label style="margin-top: 1em; font-size: 0.9em;">
-      <input type="checkbox" required>
-      En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
-    </label>
-
-    <button type="submit">Envoyer</button>
-    <div class="message" id="message"></div>
-  </form>
-
-  <!-- SDK Axeptio -->
+  <!-- Axeptio SDK -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
       cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
+    (function(d, s) {
+      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      e.async = true; e.src = "https://static.axept.io/sdk.js";
+      t.parentNode.insertBefore(e, t);
+    })(document, "script");
   </script>
-  <script async src="https://static.axept.io/sdk.js"></script>
 
-  <!-- Écoute de l'événement "cookies:complete" pour envoyer un trigger GTM personnalisé -->
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    label { display: block; margin: 0.5em 0; }
+    input, button { padding: 0.4em; }
+    #message { margin-top: 1em; font-weight: bold; }
+  </style>
+</head>
+
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-55BBX5K4" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <h1>Formulaire de contact</h1>
+  <form id="contactForm">
+    <label>Prénom : <input type="text" name="firstname" required></label>
+    <label>Nom : <input type="text" name="lastname" required></label>
+    <label>Email : <input type="email" name="email" required></label>
+    <button type="submit">Envoyer</button>
+  </form>
+  <div id="message"></div>
+
   <script>
-    window._axcb = window._axcb || [];
-    window._axcb.push(function(axeptio) {
-      axeptio.on("cookies:complete", function(choices) {
-        if (choices && choices.hubspot === true) {
-          // Consentement donné pour HubSpot → envoie un événement GTM
-          window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({ event: "axeptio_activate_hubspot" });
-        }
-      });
-    });
-  </script>
+    const portalId = "49153213";
+    const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
 
-  <!-- Soumission formulaire via API HubSpot, avec contrôle Axeptio -->
-<script>
-  async function getConsentStatus(serviceName) {
-    return new Promise((resolve) => {
-      if (window._axcb) {
-        window._axcb.push(function (axeptio) {
-          const status = axeptio.userPreferences?.services?.[serviceName];
-          resolve(status === true);
-        });
-      } else {
-        resolve(false);
-      }
-    });
-  }
+    document.getElementById("contactForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
 
-  document.getElementById("contactForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-    const form = e.target;
-
-    const hasConsent = await getConsentStatus("hubspot");
-
-    const data = {
-      fields: [
-        { name: "firstname", value: form.firstname.value },
-        { name: "lastname", value: form.lastname.value },
-        { name: "email", value: form.email.value }
-      ]
-    };
-
-    // Ajoute le contexte uniquement si l'utilisateur a consenti au service HubSpot
-    if (hasConsent) {
-      data.context = {
-        pageUri: window.location.href,
-        pageName: "Formulaire RGPD"
+      const form = e.target;
+      const data = {
+        fields: [
+          { name: "firstname", value: form.firstname.value },
+          { name: "lastname", value: form.lastname.value },
+          { name: "email", value: form.email.value }
+        ],
+        context: {}
       };
-    }
 
-    const portalId = "44344318"; // vérifie bien ce portail HubSpot
-    const formId = "4b18f182-dbe4-4607-9f62-ef4961f18f38"; // et ce formId
-    const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+      // Attendre qu'Axeptio soit prêt
+      const waitForAxeptio = () => new Promise(resolve => {
+        if (window._axeptioSDK) return resolve(window._axeptioSDK);
+        const check = setInterval(() => {
+          if (window._axeptioSDK) {
+            clearInterval(check);
+            resolve(window._axeptioSDK);
+          }
+        }, 100);
+      });
 
-    try {
-      const res = await fetch(url, {
+      const axeptio = await waitForAxeptio();
+      const hasConsent = axeptio.userHasConsentedTo("hubspot");
+
+      // Ajouter tracking HubSpot uniquement si consentement
+      if (hasConsent && window._hsq) {
+        window._hsq.push(["trackPageView"]);
+        data.context = {
+          hutk: document.cookie.match(/hubspotutk=([\w\-]+)/)?.[1] || "",
+          pageUri: window.location.href,
+          pageName: document.title
+        };
+      }
+
+      // Soumettre à HubSpot via API
+      const response = await fetch(`https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
 
-      if (res.ok) {
-        document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
+      if (response.ok) {
+        document.getElementById("message").innerText = "Merci, votre message a bien été envoyé.";
         form.reset();
       } else {
-        const errorText = await res.text();
-        document.getElementById("message").textContent = "Erreur : " + errorText;
+        document.getElementById("message").innerText = "Erreur lors de l'envoi du formulaire.";
+        console.error(await response.text());
       }
-    } catch (err) {
-      document.getElementById("message").textContent = "Erreur réseau ou de script.";
-      console.error(err);
-    }
-  });
-</script>
-
+    });
+  </script>
 </body>
 </html>
