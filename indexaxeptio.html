@@ -2,57 +2,75 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Formulaire RGPD avec Axeptio & HubSpot</title>
+  <title>Formulaire RGPD compliant - HubSpot + Axeptio</title>
 
-  <!-- Initialisation Axeptio -->
+  <!-- Axeptio - À charger le plus tôt possible -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
-      googleConsentMode: {
-        default: {
-          analytics_storage: "denied",
-          ad_storage: "denied",
-          ad_user_data: "denied",
-          ad_personalization: "denied",
-          wait_for_update: 500
-        }
-      }
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
 
     (function(d, s) {
       var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true; e.src = "//static.axept.io/sdk.js";
+      e.async = true;
+      e.src = "https://static.axept.io/sdk.js";
       t.parentNode.insertBefore(e, t);
     })(document, "script");
 
-    // Chargement du script HubSpot et affichage du formulaire après consentement
+    // Lors du consentement Axeptio
     window._axcb = window._axcb || [];
-    window._axcb.push(function(axeptio) {
-      axeptio.on("cookies:complete", function(choices) {
+    window._axcb.push(function (axeptio) {
+      axeptio.on("cookies:complete", function (choices) {
         if (choices && choices.hubspot === true) {
-          const script = document.createElement("script");
-          script.src = "https://js.hsforms.net/forms/embed/v2.js";
-          script.onload = function () {
-            hbspt.forms.create({
-              region: "eu1", // ou "na1" si ton compte est basé aux US
-              portalId: "49153213",
-              formId: "1262a4d1-1496-4553-b70d-64bc1e676047",
-              target: "#hubspot-form-container"
-            });
-          };
-          document.head.appendChild(script);
+          // Injecter les cookies + script de suivi HubSpot
+          var hsScript = document.createElement("script");
+          hsScript.type = "text/javascript";
+          hsScript.async = true;
+          hsScript.src = "https://js.hs-scripts.com/44344318.js"; // Ton Portal ID ici
+          document.head.appendChild(hsScript);
         }
       });
     });
   </script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 30px;
+    }
+    #formulaire-wrapper {
+      margin-top: 40px;
+    }
+  </style>
 </head>
 <body>
 
   <h2>Formulaire de contact</h2>
-  <div id="hubspot-form-container">
-    <!-- Le formulaire HubSpot apparaîtra ici après acceptation -->
-  </div>
+
+  <!-- Le formulaire natif HubSpot sera injecté ici -->
+  <div id="formulaire-wrapper"></div>
+
+  <script>
+    // Toujours injecter le formulaire via API (même sans cookies)
+    (function () {
+      const script = document.createElement("script");
+      script.src = "https://js.hsforms.net/forms/v2.js";
+      script.type = "text/javascript";
+      script.async = true;
+      script.onload = function () {
+        if (window.hbspt) {
+          window.hbspt.forms.create({
+            region: "eu1",
+            portalId: "44344318", // Ton portal ID HubSpot
+            formId: "4b18f182-dbe4-4607-9f62-ef4961f18f38", // Ton formulaire natif
+            target: "#formulaire-wrapper"
+          });
+        }
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
 
 </body>
 </html>
