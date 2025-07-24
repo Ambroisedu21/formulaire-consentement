@@ -1,33 +1,25 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <title>Formulaire RGPD compliant avec Axeptio & HubSpot</title>
   <script>
-    // Configuration Axeptio
+    // Initialisation Axeptio
     window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
-      googleConsentMode: {
-        default: {
-          analytics_storage: "denied",
-          ad_storage: "denied",
-          ad_user_data: "denied",
-          ad_personalization: "denied",
-          wait_for_update: 500
-        }
-      }
+      clientId: "6880d227f0b041d2ff94a814", // Ton ID projet Axeptio
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
 
-    // Chargement SDK Axeptio
     (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      var t = d.getElementsByTagName(s)[0],
+          e = d.createElement(s);
       e.async = true;
       e.src = "//static.axept.io/sdk.js";
       t.parentNode.insertBefore(e, t);
     })(document, "script");
 
-    // Gestion du consentement pour HubSpot
+    // Fonction appelée quand cookies acceptés
     window._axcb = window._axcb || [];
     window._axcb.push(function(axeptio) {
       axeptio.on("cookies:complete", function(choices) {
@@ -36,52 +28,23 @@
           hsScript.src = "https://js.hs-scripts.com/49153213.js";
           hsScript.async = true;
           document.head.appendChild(hsScript);
-        } else {
-          // Suppression manuelle des cookies HubSpot
-          ['hubspotutk', '__hssc', '__hstc', '__cf_bm'].forEach(function(cookieName) {
-            document.cookie = cookieName + '=; Max-Age=0; path=/; domain=' + window.location.hostname + ';';
-          });
         }
       });
     });
   </script>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 2em;
-    }
-    label {
-      display: block;
-      margin-top: 1em;
-    }
-    input, button {
-      margin-top: 0.5em;
-      padding: 0.4em;
-      width: 300px;
-    }
-    #resultat {
-      margin-top: 1em;
-      font-weight: bold;
-    }
-  </style>
 </head>
 <body>
 
   <h2>Formulaire de contact</h2>
   <form id="hubspot-form">
     <label for="prenom">Prénom :</label>
-    <input type="text" id="prenom" name="prenom" required>
+    <input type="text" id="prenom" name="prenom" required><br>
 
     <label for="nom">Nom :</label>
-    <input type="text" id="nom" name="nom" required>
+    <input type="text" id="nom" name="nom" required><br>
 
     <label for="email">Email :</label>
-    <input type="email" id="email" name="email" required>
-
-    <label>
-      <input type="checkbox" id="consentement" required>
-      En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
-    </label>
+    <input type="email" id="email" name="email" required><br>
 
     <button type="submit">Envoyer</button>
   </form>
@@ -92,13 +55,8 @@
     document.getElementById("hubspot-form").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      if (!document.getElementById("consentement").checked) {
-        alert("Merci de cocher la case de consentement.");
-        return;
-      }
-
-      const portalId = "49153213";
-      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
+      const portalId = "49153213"; // Remplace avec ton vrai Portal ID
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047"; // Remplace avec ton vrai Form ID
       const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       const data = {
@@ -128,3 +86,4 @@
 
 </body>
 </html>
+
