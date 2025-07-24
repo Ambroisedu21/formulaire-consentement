@@ -2,13 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Formulaire de contact</title>
+  <title>Formulaire RGPD avec Axeptio & HubSpot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: Arial, sans-serif; padding: 2rem; }
     h1 { font-size: 1.5rem; }
     form { max-width: 600px; margin-top: 2rem; }
-    input, textarea {
+    input {
       display: block;
       width: 100%;
       padding: 0.5rem;
@@ -34,16 +34,15 @@
 
   <form id="contact-form">
     <label for="firstname">Prénom</label>
-    <input type="text" name="firstname" id="firstname" required>
+    <input type="text" id="firstname" name="firstname" required>
 
     <label for="lastname">Nom</label>
-    <input type="text" name="lastname" id="lastname" required>
+    <input type="text" id="lastname" name="lastname" required>
 
-    <label for="email">E-mail</label>
-    <input type="email" name="email" id="email" required>
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
 
-    <button type="submit">Soumettre</button>
-
+    <button type="submit">Envoyer</button>
     <div class="hs-form-response" id="form-response"></div>
   </form>
 
@@ -68,37 +67,34 @@
       e.async = true; e.src = "//static.axept.io/sdk.js";
       t.parentNode.insertBefore(e,t);
     })(document, "script");
-  </script>
 
-  <!-- Cond. load HubSpot tracking after consent -->
-  <script>
-    window.addEventListener("axeptio_ready", () => {
-      if (window._axeptioSettings && window._axeptioSettings.clientId) {
-        window.axeptio.on("cookies:complete", function (choices) {
-          if (choices.includes("hubspot")) {
-            const hsScript = document.createElement("script");
-            hsScript.src = "https://js.hs-scripts.com/44344318.js";
-            hsScript.async = true;
-            document.head.appendChild(hsScript);
-          }
-        });
-      }
+    window._axcb = window._axcb || [];
+    window._axcb.push(function(axeptio) {
+      axeptio.on("cookies:complete", function(choices) {
+        if (choices && choices.includes("hubspot")) {
+          const hs = document.createElement("script");
+          hs.src = "https://js.hs-scripts.com/44344318.js"; // Ton vrai Portal ID
+          hs.async = true;
+          document.head.appendChild(hs);
+        }
+      });
     });
   </script>
 
-  <!-- Form submission via API HubSpot -->
+  <!-- Form submission -->
   <script>
-    const form = document.getElementById('contact-form');
-    const responseDiv = document.getElementById('form-response');
-
-    form.addEventListener('submit', async (e) => {
+    document.getElementById("contact-form").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const formData = {
+      const portalId = "44344318"; // ✅ Remplace si besoin
+      const formId = "4b18f182-dbe4-4607-9f62-ef4961f18f38"; // ✅ Remplace si besoin
+      const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+
+      const data = {
         fields: [
-          { name: "firstname", value: form.firstname.value },
-          { name: "lastname", value: form.lastname.value },
-          { name: "email", value: form.email.value }
+          { name: "firstname", value: document.getElementById("firstname").value },
+          { name: "lastname", value: document.getElementById("lastname").value },
+          { name: "email", value: document.getElementById("email").value }
         ],
         context: {
           pageUri: window.location.href,
@@ -107,22 +103,18 @@
       };
 
       try {
-        const res = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/44344318/4b18f182-dbe4-4607-9f62-ef4961f18f38", {
+        const response = await fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(formData)
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
         });
 
-        if (res.ok) {
-          responseDiv.innerText = "Merci pour votre soumission !";
-          form.reset();
-        } else {
-          responseDiv.innerText = "Erreur lors de la soumission.";
-        }
+        const resText = await response.text();
+        document.getElementById("form-response").textContent = response.ok
+          ? "Formulaire envoyé avec succès !"
+          : `Erreur lors de l'envoi : ${resText}`;
       } catch (err) {
-        responseDiv.innerText = "Erreur réseau.";
+        document.getElementById("form-response").textContent = `Erreur réseau : ${err.message}`;
       }
     });
   </script>
