@@ -1,123 +1,127 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Formulaire RGPD avec Axeptio & HubSpot</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulaire RGPD Axeptio</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 2rem; }
-    h1 { font-size: 1.5rem; }
-    form { max-width: 600px; margin-top: 2rem; }
-    input {
-      display: block;
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.25rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      background-color: #33475b;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .hs-form-response { margin-top: 1rem; font-weight: bold; }
+    body { font-family: Arial; padding: 2em; }
+    form label { display: block; margin-top: 1em; }
+    input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
+    button { margin-top: 1em; padding: 0.5em 1em; }
+    .message { margin-top: 1em; font-weight: bold; }
   </style>
 </head>
 <body>
-
   <h1>Formulaire de contact</h1>
 
-  <form id="contact-form">
-    <label for="firstname">Prénom</label>
+  <form id="contactForm">
+    <label for="firstname">Prénom :</label>
     <input type="text" id="firstname" name="firstname" required>
 
-    <label for="lastname">Nom</label>
+    <label for="lastname">Nom :</label>
     <input type="text" id="lastname" name="lastname" required>
 
-    <label for="email">Email</label>
+    <label for="email">Email :</label>
     <input type="email" id="email" name="email" required>
 
+    <label style="margin-top: 1em; font-size: 0.9em;">
+      <input type="checkbox" required>
+      En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
+    </label>
+
     <button type="submit">Envoyer</button>
-    <div class="hs-form-response" id="form-response"></div>
   </form>
 
-  <!-- Axeptio -->
+  <div class="message" id="message"></div>
+
+  <!-- AXEPTIO SDK -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
-      googleConsentMode: {
-        default: {
-          analytics_storage: "denied",
-          ad_storage: "denied",
-          ad_user_data: "denied",
-          ad_personalization: "denied",
-          wait_for_update: 500
-        }
-      }
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
-
     (function(d,s){
       var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
       e.async = true; e.src = "//static.axept.io/sdk.js";
       t.parentNode.insertBefore(e,t);
-    })(document, "script");
+    })(document,"script");
+  </script>
 
-    window._axcb = window._axcb || [];
+  <!-- LOGIQUE AXEPTIO POUR INJECTER TRACKING HUBSPOT -->
+  <script>
+    // Pour suivre l’état du consentement utilisateur
+    void 0 === window._axcb && (window._axcb = []);
     window._axcb.push(function(axeptio) {
       axeptio.on("cookies:complete", function(choices) {
-        if (choices && choices.includes("hubspot")) {
-          const hs = document.createElement("script");
-          hs.src = "https://js.hs-scripts.com/44344318.js"; // Ton vrai Portal ID
-          hs.async = true;
-          document.head.appendChild(hs);
+        if (choices && choices.hubspot === true) {
+          injectHubspotTracking();
+        } else {
+          deleteHubspotCookies();
         }
       });
     });
-  </script>
 
-  <!-- Form submission -->
-  <script>
-    document.getElementById("contact-form").addEventListener("submit", async function (e) {
+    function injectHubspotTracking() {
+      if (!window._hsLoaded) {
+        const script = document.createElement("script");
+        script.src = "https://js.hs-scripts.com/49153213.js";
+        script.type = "text/javascript";
+        script.defer = true;
+        document.head.appendChild(script);
+        window._hsLoaded = true;
+      }
+    }
+
+    function deleteHubspotCookies() {
+      const cookies = ["hubspotutk", "__hssc", "__hssrc", "__hstc"];
+      cookies.forEach(c => {
+        document.cookie = `${c}=; Max-Age=0; path=/; domain=${location.hostname}`;
+      });
+    }
+
+    // Écouteur du formulaire (toujours actif)
+    document.getElementById("contactForm").addEventListener("submit", async function (e) {
       e.preventDefault();
+      const form = e.target;
 
-      const portalId = "44344318"; // ✅ Remplace si besoin
-      const formId = "4b18f182-dbe4-4607-9f62-ef4961f18f38"; // ✅ Remplace si besoin
-      const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+      // Vérifie si consentement cookies Axeptio → service HubSpot accepté
+      let cookiesAccepted = false;
+      if (window._axeptioSettings && window._axeptioSettings.clientId) {
+        const storedChoices = JSON.parse(localStorage.getItem("axeptio_authorized_vendors") || "[]");
+        cookiesAccepted = storedChoices.includes("hubspot");
+      }
 
       const data = {
         fields: [
-          { name: "firstname", value: document.getElementById("firstname").value },
-          { name: "lastname", value: document.getElementById("lastname").value },
-          { name: "email", value: document.getElementById("email").value }
+          { name: "firstname", value: form.firstname.value },
+          { name: "lastname", value: form.lastname.value },
+          { name: "email", value: form.email.value }
         ],
-        context: {
+        context: cookiesAccepted ? {
           pageUri: window.location.href,
-          pageName: document.title
-        }
+          pageName: "Formulaire RGPD avec Axeptio"
+        } : {}
       };
 
+      const portalId = "49153213";
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
+      const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+
       try {
-        const response = await fetch(url, {
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
-
-        const resText = await response.text();
-        document.getElementById("form-response").textContent = response.ok
+        document.getElementById("message").textContent = res.ok
           ? "Formulaire envoyé avec succès !"
-          : `Erreur lors de l'envoi : ${resText}`;
+          : "Erreur lors de l'envoi.";
+        if (res.ok) form.reset();
       } catch (err) {
-        document.getElementById("form-response").textContent = `Erreur réseau : ${err.message}`;
+        document.getElementById("message").textContent = "Erreur réseau.";
       }
     });
   </script>
-
 </body>
 </html>
