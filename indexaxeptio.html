@@ -2,74 +2,129 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Formulaire RGPD compliant - HubSpot + Axeptio</title>
-
-  <!-- Axeptio - À charger le plus tôt possible -->
-  <script>
-    window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
-    };
-
-    (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true;
-      e.src = "https://static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e, t);
-    })(document, "script");
-
-    // Lors du consentement Axeptio
-    window._axcb = window._axcb || [];
-    window._axcb.push(function (axeptio) {
-      axeptio.on("cookies:complete", function (choices) {
-        if (choices && choices.hubspot === true) {
-          // Injecter les cookies + script de suivi HubSpot
-          var hsScript = document.createElement("script");
-          hsScript.type = "text/javascript";
-          hsScript.async = true;
-          hsScript.src = "https://js.hs-scripts.com/44344318.js"; // Ton Portal ID ici
-          document.head.appendChild(hsScript);
-        }
-      });
-    });
-  </script>
-
+  <title>Formulaire de contact</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 30px;
+    body { font-family: Arial, sans-serif; padding: 2rem; }
+    h1 { font-size: 1.5rem; }
+    form { max-width: 600px; margin-top: 2rem; }
+    input, textarea {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
-    #formulaire-wrapper {
-      margin-top: 40px;
+    button {
+      background-color: #33475b;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
+    .hs-form-response { margin-top: 1rem; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <h2>Formulaire de contact</h2>
+  <h1>Formulaire de contact</h1>
 
-  <!-- Le formulaire natif HubSpot sera injecté ici -->
-  <div id="formulaire-wrapper"></div>
+  <form id="contact-form">
+    <label for="firstname">Prénom</label>
+    <input type="text" name="firstname" id="firstname" required>
 
+    <label for="lastname">Nom</label>
+    <input type="text" name="lastname" id="lastname" required>
+
+    <label for="email">E-mail</label>
+    <input type="email" name="email" id="email" required>
+
+    <button type="submit">Soumettre</button>
+
+    <div class="hs-form-response" id="form-response"></div>
+  </form>
+
+  <!-- Axeptio -->
   <script>
-    // Toujours injecter le formulaire via API (même sans cookies)
-    (function () {
-      const script = document.createElement("script");
-      script.src = "https://js.hsforms.net/forms/v2.js";
-      script.type = "text/javascript";
-      script.async = true;
-      script.onload = function () {
-        if (window.hbspt) {
-          window.hbspt.forms.create({
-            region: "eu1",
-            portalId: "44344318", // Ton portal ID HubSpot
-            formId: "4b18f182-dbe4-4607-9f62-ef4961f18f38", // Ton formulaire natif
-            target: "#formulaire-wrapper"
-          });
+    window.axeptioSettings = {
+      clientId: "6880d227f0b041d2ff94a814",
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
+      googleConsentMode: {
+        default: {
+          analytics_storage: "denied",
+          ad_storage: "denied",
+          ad_user_data: "denied",
+          ad_personalization: "denied",
+          wait_for_update: 500
+        }
+      }
+    };
+
+    (function(d,s){
+      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      e.async = true; e.src = "//static.axept.io/sdk.js";
+      t.parentNode.insertBefore(e,t);
+    })(document, "script");
+  </script>
+
+  <!-- Cond. load HubSpot tracking after consent -->
+  <script>
+    window.addEventListener("axeptio_ready", () => {
+      if (window._axeptioSettings && window._axeptioSettings.clientId) {
+        window.axeptio.on("cookies:complete", function (choices) {
+          if (choices.includes("hubspot")) {
+            const hsScript = document.createElement("script");
+            hsScript.src = "https://js.hs-scripts.com/44344318.js";
+            hsScript.async = true;
+            document.head.appendChild(hsScript);
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- Form submission via API HubSpot -->
+  <script>
+    const form = document.getElementById('contact-form');
+    const responseDiv = document.getElementById('form-response');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        fields: [
+          { name: "firstname", value: form.firstname.value },
+          { name: "lastname", value: form.lastname.value },
+          { name: "email", value: form.email.value }
+        ],
+        context: {
+          pageUri: window.location.href,
+          pageName: document.title
         }
       };
-      document.head.appendChild(script);
-    })();
+
+      try {
+        const res = await fetch("https://api.hsforms.com/submissions/v3/integration/submit/44344318/4b18f182-dbe4-4607-9f62-ef4961f18f38", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (res.ok) {
+          responseDiv.innerText = "Merci pour votre soumission !";
+          form.reset();
+        } else {
+          responseDiv.innerText = "Erreur lors de la soumission.";
+        }
+      } catch (err) {
+        responseDiv.innerText = "Erreur réseau.";
+      }
+    });
   </script>
 
 </body>
