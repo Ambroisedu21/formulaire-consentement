@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Tracking HubSpot RGPD</title>
+
+  <!-- Axeptio CMP -->
+  <script>
+    window.axeptioSettings = {
+      clientId: "6880d227f0b041d2ff94a814",
+      cookiesVersion: "default",
+    };
+  </script>
+  <script async src="https://static.axept.io/sdk.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    button {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      padding: 0.7rem 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Page de test du tracking HubSpot</h1>
+  <p>Cette page permet de vérifier que le tracking HubSpot ne s'active qu'après consentement via Axeptio.</p>
+
+  <div class="hs-form-frame"
+       data-region="na1"
+       data-form-id="1262a4d1-1496-4553-b70d-64bc1e676047"
+       data-portal-id="49153213">
+  </div>
+
+  <button id="track-button">📊 Cliquez ici pour envoyer un événement de tracking</button>
+
+  <script>
+    // Charger le formulaire HubSpot (sans cookies ni tracking)
+    (function () {
+      const script = document.createElement("script");
+      script.src = "https://js.hsforms.net/forms/embed/49153213.js";
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  </script>
+
+  <script>
+    // Injection conditionnelle de GTM si consentement Axeptio "hubspot"
+    window.addEventListener("axeptio_ready", function () {
+      window._axcb = window._axcb || [];
+      window._axcb.push(function (sdk) {
+        if (sdk.hasConsented("hubspot")) {
+          // Charger GTM (et donc le script hs-scripts avec tracking)
+          const gtmScript = document.createElement("script");
+          gtmScript.setAttribute("async", "");
+          gtmScript.src = "https://www.googletagmanager.com/gtm.js?id=GTM-55BBX5K4";
+          document.head.appendChild(gtmScript);
+
+          // Déclencher un événement fictif après consentement (visible dans l’onglet Réseau ou console)
+          document.getElementById("track-button").addEventListener("click", function () {
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+              event: "trackTestEvent",
+              event_category: "Consentement",
+              event_action: "Clic sur bouton de tracking",
+              event_label: "Test tracking Axeptio + HubSpot"
+            });
+            alert("Événement envoyé ! Vérifie les cookies et l’activité réseau.");
+          });
+        } else {
+          // Bouton désactivé si refus
+          document.getElementById("track-button").disabled = true;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
