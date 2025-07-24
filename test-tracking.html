@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Test Tracking HubSpot RGPD</title>
+  <title>Formulaire de contact – Test tracking HubSpot</title>
 
   <!-- Axeptio CMP -->
   <script>
@@ -26,20 +26,19 @@
   </style>
 </head>
 <body>
-  <h1>Page de test du tracking HubSpot</h1>
-  <p>Cette page permet de vérifier que le tracking HubSpot ne s'active qu'après consentement via Axeptio.</p>
+  <h1>Formulaire de contact</h1>
+  <p>Cette page permet de vérifier que le tracking HubSpot ne s'active qu’après consentement via Axeptio.</p>
 
+  <!-- Formulaire HubSpot -->
   <div class="hs-form-frame"
        data-region="na1"
        data-form-id="1262a4d1-1496-4553-b70d-64bc1e676047"
        data-portal-id="49153213">
   </div>
 
-  <button id="track-button">📊 Cliquez ici pour envoyer un événement de tracking</button>
-
   <script>
-    // Charger le formulaire HubSpot (sans cookies ni tracking)
-    (function () {
+    // Charger dynamiquement le formulaire HubSpot
+    (function() {
       const script = document.createElement("script");
       script.src = "https://js.hsforms.net/forms/embed/49153213.js";
       script.defer = true;
@@ -47,35 +46,41 @@
     })();
   </script>
 
+  <!-- Bouton de test tracking -->
+  <button id="testTrackingBtn">▶ Envoyer un événement personnalisé à HubSpot</button>
+
   <script>
-    // Injection conditionnelle de GTM si consentement Axeptio "hubspot"
+    document.getElementById("testTrackingBtn").addEventListener("click", () => {
+      if (typeof dataLayer !== "undefined") {
+        dataLayer.push({ event: "form_test_submission" });
+        alert("Événement 'form_test_submission' envoyé !");
+      } else {
+        console.warn("dataLayer non défini.");
+      }
+    });
+  </script>
+
+  <!-- Google Tag Manager – Injecté dynamiquement si consentement Axeptio pour HubSpot -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+
     window.addEventListener("axeptio_ready", function () {
       window._axcb = window._axcb || [];
       window._axcb.push(function (sdk) {
         if (sdk.hasConsented("hubspot")) {
-          // Charger GTM (et donc le script hs-scripts avec tracking)
           const gtmScript = document.createElement("script");
-          gtmScript.setAttribute("async", "");
+          gtmScript.async = true;
           gtmScript.src = "https://www.googletagmanager.com/gtm.js?id=GTM-55BBX5K4";
           document.head.appendChild(gtmScript);
-
-          // Déclencher un événement fictif après consentement (visible dans l’onglet Réseau ou console)
-          document.getElementById("track-button").addEventListener("click", function () {
-            window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push({
-              event: "trackTestEvent",
-              event_category: "Consentement",
-              event_action: "Clic sur bouton de tracking",
-              event_label: "Test tracking Axeptio + HubSpot"
-            });
-            alert("Événement envoyé ! Vérifie les cookies et l’activité réseau.");
-          });
-        } else {
-          // Bouton désactivé si refus
-          document.getElementById("track-button").disabled = true;
         }
       });
     });
   </script>
+
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-55BBX5K4"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
 </body>
 </html>
