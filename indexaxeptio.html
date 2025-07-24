@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Formulaire RGPD avec Axeptio + HubSpot</title>
+  <title>Formulaire RGPD compliant avec Axeptio & HubSpot</title>
 
-  <!-- Bannière Axeptio -->
+  <!-- Configuration Axeptio -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
@@ -26,59 +26,45 @@
       t.parentNode.insertBefore(e, t);
     })(document, "script");
 
-    // Déclencheur post-consentement Axeptio
+    // Injection du script HubSpot conditionnelle au consentement
     window._axcb = window._axcb || [];
     window._axcb.push(function(axeptio) {
       axeptio.on("cookies:complete", function(choices) {
         if (choices && choices.hubspot === true) {
-          // Charger le script de tracking HubSpot
           const script = document.createElement("script");
           script.src = "https://js.hs-scripts.com/49153213.js";
           script.async = true;
           document.head.appendChild(script);
-
-          // Simuler un hit de conversion (facultatif)
-          window._hsq = window._hsq || [];
-          window._hsq.push(["trackPageView"]);
         }
       });
     });
   </script>
-
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    label { display: block; margin-top: 1rem; }
-    input { padding: 0.5rem; width: 300px; }
-    button { margin-top: 1rem; padding: 0.5rem 1rem; }
-  </style>
 </head>
 <body>
 
   <h2>Formulaire de contact</h2>
   <form id="hubspot-form">
     <label for="prenom">Prénom :</label>
-    <input type="text" id="prenom" name="prenom" required>
+    <input type="text" id="prenom" name="prenom" required><br>
 
     <label for="nom">Nom :</label>
-    <input type="text" id="nom" name="nom" required>
+    <input type="text" id="nom" name="nom" required><br>
 
     <label for="email">Email :</label>
-    <input type="email" id="email" name="email" required>
+    <input type="email" id="email" name="email" required><br>
 
-    <p>
-      En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
-    </p>
     <button type="submit">Envoyer</button>
   </form>
 
   <p id="resultat"></p>
 
+  <!-- Envoi des données via API HubSpot -->
   <script>
     document.getElementById("hubspot-form").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const portalId = "49153213";
-      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
+      const portalId = "49153213"; // Remplace si besoin
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047"; // Remplace si besoin
       const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       const data = {
@@ -86,11 +72,7 @@
           { name: "firstname", value: document.getElementById("prenom").value },
           { name: "lastname", value: document.getElementById("nom").value },
           { name: "email", value: document.getElementById("email").value }
-        ],
-        context: {
-          pageUri: window.location.href,
-          pageName: document.title
-        }
+        ]
       };
 
       try {
