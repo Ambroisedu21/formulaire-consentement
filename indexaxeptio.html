@@ -1,51 +1,73 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Formulaire RGPD compliant avec Axeptio & HubSpot</title>
+  <title>Formulaire RGPD avec Axeptio + HubSpot</title>
+
+  <!-- Bannière Axeptio -->
   <script>
-    // Initialisation Axeptio
     window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814", // Ton ID projet Axeptio
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
+      clientId: "6880d227f0b041d2ff94a814",
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
+      googleConsentMode: {
+        default: {
+          analytics_storage: "denied",
+          ad_storage: "denied",
+          ad_user_data: "denied",
+          ad_personalization: "denied",
+          wait_for_update: 500
+        }
+      }
     };
 
     (function(d, s) {
-      var t = d.getElementsByTagName(s)[0],
-          e = d.createElement(s);
-      e.async = true;
-      e.src = "//static.axept.io/sdk.js";
+      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      e.async = true; e.src = "//static.axept.io/sdk.js";
       t.parentNode.insertBefore(e, t);
     })(document, "script");
 
-    // Fonction appelée quand cookies acceptés
+    // Déclencheur post-consentement Axeptio
     window._axcb = window._axcb || [];
     window._axcb.push(function(axeptio) {
       axeptio.on("cookies:complete", function(choices) {
         if (choices && choices.hubspot === true) {
-          var hsScript = document.createElement("script");
-          hsScript.src = "https://js.hs-scripts.com/49153213.js";
-          hsScript.async = true;
-          document.head.appendChild(hsScript);
+          // Charger le script de tracking HubSpot
+          const script = document.createElement("script");
+          script.src = "https://js.hs-scripts.com/49153213.js";
+          script.async = true;
+          document.head.appendChild(script);
+
+          // Simuler un hit de conversion (facultatif)
+          window._hsq = window._hsq || [];
+          window._hsq.push(["trackPageView"]);
         }
       });
     });
   </script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    label { display: block; margin-top: 1rem; }
+    input { padding: 0.5rem; width: 300px; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; }
+  </style>
 </head>
 <body>
 
   <h2>Formulaire de contact</h2>
   <form id="hubspot-form">
     <label for="prenom">Prénom :</label>
-    <input type="text" id="prenom" name="prenom" required><br>
+    <input type="text" id="prenom" name="prenom" required>
 
     <label for="nom">Nom :</label>
-    <input type="text" id="nom" name="nom" required><br>
+    <input type="text" id="nom" name="nom" required>
 
     <label for="email">Email :</label>
-    <input type="email" id="email" name="email" required><br>
+    <input type="email" id="email" name="email" required>
 
+    <p>
+      En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
+    </p>
     <button type="submit">Envoyer</button>
   </form>
 
@@ -55,8 +77,8 @@
     document.getElementById("hubspot-form").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const portalId = "49153213"; // Remplace avec ton vrai Portal ID
-      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047"; // Remplace avec ton vrai Form ID
+      const portalId = "49153213";
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
       const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       const data = {
@@ -64,7 +86,11 @@
           { name: "firstname", value: document.getElementById("prenom").value },
           { name: "lastname", value: document.getElementById("nom").value },
           { name: "email", value: document.getElementById("email").value }
-        ]
+        ],
+        context: {
+          pageUri: window.location.href,
+          pageName: document.title
+        }
       };
 
       try {
@@ -86,4 +112,3 @@
 
 </body>
 </html>
-
