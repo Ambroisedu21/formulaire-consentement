@@ -3,22 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <title>Formulaire RGPD compliant avec Axeptio & HubSpot</title>
+
+  <!-- Script Axeptio -->
   <script>
-    // Initialisation Axeptio
     window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814", // Ton ID projet Axeptio
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
+      clientId: "6880d227f0b041d2ff94a814",
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
+      googleConsentMode: {
+        default: {
+          analytics_storage: "denied",
+          ad_storage: "denied",
+          ad_user_data: "denied",
+          ad_personalization: "denied",
+          wait_for_update: 500
+        }
+      }
     };
 
     (function(d, s) {
-      var t = d.getElementsByTagName(s)[0],
-          e = d.createElement(s);
-      e.async = true;
-      e.src = "//static.axept.io/sdk.js";
+      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      e.async = true; e.src = "//static.axept.io/sdk.js";
       t.parentNode.insertBefore(e, t);
     })(document, "script");
 
-    // Fonction appelée quand cookies acceptés
+    // Chargement de HubSpot uniquement si le consentement "hubspot" est accepté
     window._axcb = window._axcb || [];
     window._axcb.push(function(axeptio) {
       axeptio.on("cookies:complete", function(choices) {
@@ -54,8 +62,8 @@
     document.getElementById("hubspot-form").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const portalId = "49153213"; // Remplace avec ton vrai Portal ID
-      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047"; // Remplace avec ton vrai Form ID
+      const portalId = "49153213";
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
       const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       const data = {
