@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <title>Formulaire RGPD + Axeptio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Formulaire RGPD Axeptio</title>
   <style>
     body { font-family: Arial; padding: 2em; }
     form label { display: block; margin-top: 1em; }
@@ -13,8 +13,8 @@
   </style>
 </head>
 <body>
-  <h1>Formulaire de contact</h1>
 
+  <h1>Formulaire de contact</h1>
   <form id="contactForm">
     <label for="firstname">Prénom :</label>
     <input type="text" id="firstname" name="firstname" required>
@@ -32,64 +32,63 @@
 
     <button type="submit">Envoyer</button>
   </form>
-
   <div class="message" id="message"></div>
 
-  <!-- AXEPTIO SDK -->
+  <!-- SDK AXEPTIO -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU",
+      googleConsentMode: {
+        default: {
+          analytics_storage: "denied",
+          ad_storage: "denied",
+          ad_user_data: "denied",
+          ad_personalization: "denied",
+          wait_for_update: 500
+        }
+      }
     };
-    (function(d,s){
+    (function(d, s) {
       var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
       e.async = true; e.src = "//static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e,t);
-    })(document,"script");
+      t.parentNode.insertBefore(e, t);
+    })(document, "script");
   </script>
 
-  <!-- LOGIQUE AXEPTIO POUR INJECTER TRACKING HUBSPOT -->
+  <!-- Script de contrôle Axeptio : injection HubSpot uniquement si accepté -->
   <script>
-    // Pour suivre l’état du consentement utilisateur
-    void 0 === window._axcb && (window._axcb = []);
+    window._axcb = window._axcb || [];
     window._axcb.push(function(axeptio) {
       axeptio.on("cookies:complete", function(choices) {
-        if (choices && choices.hubspot === true) {
-          injectHubspotTracking();
-        } else {
-          deleteHubspotCookies();
+        if (choices && choices.hubspot) {
+          const script = document.createElement("script");
+          script.src = "https://js.hs-scripts.com/49153213.js";
+          script.type = "text/javascript";
+          script.async = true;
+          script.defer = true;
+          document.head.appendChild(script);
         }
       });
     });
+  </script>
 
-    function injectHubspotTracking() {
-      if (!window._hsLoaded) {
-        const script = document.createElement("script");
-        script.src = "https://js.hs-scripts.com/49153213.js";
-        script.type = "text/javascript";
-        script.defer = true;
-        document.head.appendChild(script);
-        window._hsLoaded = true;
-      }
-    }
-
-    function deleteHubspotCookies() {
-      const cookies = ["hubspotutk", "__hssc", "__hssrc", "__hstc"];
-      cookies.forEach(c => {
-        document.cookie = `${c}=; Max-Age=0; path=/; domain=${location.hostname}`;
-      });
-    }
-
-    // Écouteur du formulaire (toujours actif)
+  <!-- Soumission API HubSpot -->
+  <script>
     document.getElementById("contactForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       const form = e.target;
 
-      // Vérifie si consentement cookies Axeptio → service HubSpot accepté
+      // On lit la valeur de consentement depuis Axeptio
       let cookiesAccepted = false;
-      if (window._axeptioSettings && window._axeptioSettings.clientId) {
-        const storedChoices = JSON.parse(localStorage.getItem("axeptio_authorized_vendors") || "[]");
-        cookiesAccepted = storedChoices.includes("hubspot");
+      if (window._axcb && window._axcb.length > 0) {
+        try {
+          cookiesAccepted = await new Promise((resolve) => {
+            window._axcb.push((axeptio) => {
+              resolve(axeptio.getConsent("hubspot"));
+            });
+          });
+        } catch (e) {}
       }
 
       const data = {
@@ -100,8 +99,8 @@
         ],
         context: cookiesAccepted ? {
           pageUri: window.location.href,
-          pageName: "Formulaire RGPD avec Axeptio"
-        } : {}
+          pageName: "Formulaire RGPD"
+        } : {} // vide si refusé
       };
 
       const portalId = "49153213";
@@ -114,14 +113,17 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
-        document.getElementById("message").textContent = res.ok
-          ? "Formulaire envoyé avec succès !"
-          : "Erreur lors de l'envoi.";
-        if (res.ok) form.reset();
+        if (res.ok) {
+          document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
+          form.reset();
+        } else {
+          document.getElementById("message").textContent = "Erreur lors de l'envoi.";
+        }
       } catch (err) {
         document.getElementById("message").textContent = "Erreur réseau.";
       }
     });
   </script>
+
 </body>
 </html>
