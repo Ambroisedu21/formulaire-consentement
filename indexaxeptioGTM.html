@@ -76,45 +76,67 @@
     });
   </script>
 
-  <!-- Soumission formulaire via API HubSpot -->
-  <script>
-    document.getElementById("contactForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const form = e.target;
-
-      const data = {
-        fields: [
-          { name: "firstname", value: form.firstname.value },
-          { name: "lastname", value: form.lastname.value },
-          { name: "email", value: form.email.value }
-        ],
-        context: {
-          pageUri: window.location.href,
-          pageName: "Formulaire RGPD"
-        }
-      };
-
-      const portalId = "44344318"; // Ton portal ID HubSpot
-      const formId = "4b18f182-dbe4-4607-9f62-ef4961f18f38"; // Ton form ID HubSpot
-      const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
-
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
+  <!-- Soumission formulaire via API HubSpot, avec contrôle Axeptio -->
+<script>
+  async function getConsentStatus(serviceName) {
+    return new Promise((resolve) => {
+      if (window._axcb) {
+        window._axcb.push(function (axeptio) {
+          const status = axeptio.userPreferences?.services?.[serviceName];
+          resolve(status === true);
         });
-
-        if (res.ok) {
-          document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
-          form.reset();
-        } else {
-          document.getElementById("message").textContent = "Erreur lors de l'envoi.";
-        }
-      } catch (err) {
-        document.getElementById("message").textContent = "Erreur réseau.";
+      } else {
+        resolve(false);
       }
     });
-  </script>
+  }
+
+  document.getElementById("contactForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const form = e.target;
+
+    const hasConsent = await getConsentStatus("hubspot");
+
+    const data = {
+      fields: [
+        { name: "firstname", value: form.firstname.value },
+        { name: "lastname", value: form.lastname.value },
+        { name: "email", value: form.email.value }
+      ]
+    };
+
+    // Ajoute le contexte uniquement si l'utilisateur a consenti au service HubSpot
+    if (hasConsent) {
+      data.context = {
+        pageUri: window.location.href,
+        pageName: "Formulaire RGPD"
+      };
+    }
+
+    const portalId = "44344318"; // vérifie bien ce portail HubSpot
+    const formId = "4b18f182-dbe4-4607-9f62-ef4961f18f38"; // et ce formId
+    const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
+        form.reset();
+      } else {
+        const errorText = await res.text();
+        document.getElementById("message").textContent = "Erreur : " + errorText;
+      }
+    } catch (err) {
+      document.getElementById("message").textContent = "Erreur réseau ou de script.";
+      console.error(err);
+    }
+  });
+</script>
+
 </body>
 </html>
