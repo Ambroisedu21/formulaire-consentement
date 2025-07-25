@@ -1,70 +1,53 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Test tracking HubSpot + Axeptio</title>
+  <meta charset="UTF-8" />
+  <title>Formulaire de contact RGPD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Axeptio CMP -->
+  <!-- Initialisation Axeptio -->
   <script>
     window.axeptioSettings = {
       clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "default",
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
   </script>
   <script async src="https://static.axept.io/sdk.js"></script>
-
-  <!-- Formulaire HubSpot visible en permanence (sans tracking) -->
-  <script src="https://js.hsforms.net/forms/embed/49153213.js" defer></script>
 </head>
 <body>
-  <h1>Test formulaire RGPD + tracking HubSpot</h1>
 
-  <p>
-    Ce test permet de valider : <br>
-    - Si le formulaire s'affiche sans cookies<br>
-    - Si le tracking HubSpot est conditionné au consentement Axeptio<br>
-    - Si les cookies HubSpot sont visibles après consentement<br>
-  </p>
-
+  <h1>Formulaire de contact</h1>
   <div class="hs-form-frame"
        data-region="na1"
        data-form-id="1262a4d1-1496-4553-b70d-64bc1e676047"
        data-portal-id="49153213">
   </div>
 
-  <button onclick="logConsentStatus()" style="margin-top:2em;">
-    Afficher le statut de consentement Axeptio
-  </button>
-  <pre id="consent-log" style="background:#f5f5f5;padding:1em;margin-top:1em;"></pre>
-
-  <!-- GTM injection conditionnelle -->
+  <!-- Injection conditionnelle du script HubSpot après consentement Axeptio -->
   <script>
-    window.addEventListener("axeptio_ready", function () {
-      window._axcb = window._axcb || [];
-      window._axcb.push(function (sdk) {
-        if (sdk.hasConsented("hubspot")) {
-          const gtmScript = document.createElement("script");
-          gtmScript.setAttribute("async", "");
-          gtmScript.src = "https://www.googletagmanager.com/gtm.js?id=GTM-55BBX5K4";
-          document.head.appendChild(gtmScript);
-        }
-      });
+    window._axcb = window._axcb || [];
+    window._axcb.push(function (sdk) {
+      const hasConsented = sdk.hasConsented("hubspot");
+
+      // Si consentement explicite pour HubSpot, injection du script
+      if (hasConsented) {
+        const hsScript = document.createElement("script");
+        hsScript.type = "text/javascript";
+        hsScript.async = true;
+        hsScript.defer = true;
+        hsScript.src = "https://js.hs-scripts.com/49153213.js";
+        document.head.appendChild(hsScript);
+      }
     });
 
-    function logConsentStatus() {
-      if (!window._axcb) return;
-      window._axcb.push(function (sdk) {
-        const authorized = sdk.getAuthorizedVendors();
-        const all = sdk.getAllVendors();
-        const hasHubspot = sdk.hasConsented("hubspot");
-        const out = {
-          "Consent donné pour HubSpot ?": hasHubspot,
-          "Vendors autorisés": authorized,
-          "Tous les vendors disponibles": all
-        };
-        document.getElementById("consent-log").textContent = JSON.stringify(out, null, 2);
-      });
-    }
+    // Chargement dynamique du formulaire HTML via embed script HubSpot
+    (function () {
+      const embedScript = document.createElement("script");
+      embedScript.src = "https://js.hsforms.net/forms/embed/49153213.js";
+      embedScript.async = true;
+      document.head.appendChild(embedScript);
+    })();
   </script>
+
 </body>
 </html>
