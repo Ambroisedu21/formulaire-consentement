@@ -12,60 +12,53 @@
     };
   </script>
   <script async src="https://static.axept.io/sdk.js"></script>
-
-  <!-- Empêcher le préchargement de GTM/HubSpot tant que pas de consentement -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ 'event': 'gtm.init' });
-  </script>
-
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-    .hs-form-frame {
-      margin-top: 2rem;
-    }
-  </style>
 </head>
 <body>
   <h1>Formulaire de contact</h1>
-  <p>Ce formulaire est conforme au RGPD. Le tracking HubSpot ne s'active qu'après acceptation explicite via Axeptio.</p>
+  <div id="hubspot-form-container"></div>
 
-  <!-- Formulaire HubSpot -->
-  <div class="hs-form-frame"
-       data-region="na1"
-       data-form-id="1262a4d1-1496-4553-b70d-64bc1e676047"
-       data-portal-id="49153213">
-  </div>
-
-  <!-- Charge le formulaire HubSpot sans tracker -->
   <script>
-    (function() {
+    // Fonction pour injecter le formulaire HubSpot
+    function loadHubSpotForm() {
       var script = document.createElement("script");
       script.src = "https://js.hsforms.net/forms/embed/49153213.js";
-      script.defer = true;
+      script.onload = function () {
+        hbspt.forms.create({
+          region: "na1",
+          portalId: "49153213",
+          formId: "1262a4d1-1496-4553-b70d-64bc1e676047",
+          target: "#hubspot-form-container"
+        });
+      };
       document.head.appendChild(script);
-    })();
-  </script>
+    }
 
-  <!-- Injection de GTM si consentement Axeptio donné pour HubSpot -->
-  <script>
+    // Fonction pour injecter le script de tracking HubSpot
+    function loadHubSpotTracking() {
+      if (!document.getElementById("hs-script-loader")) {
+        const script = document.createElement("script");
+        script.src = "https://js.hs-scripts.com/49153213.js";
+        script.async = true;
+        script.defer = true;
+        script.id = "hs-script-loader";
+        document.head.appendChild(script);
+      }
+    }
+
+    // Dès que Axeptio est prêt, vérifier le consentement
     window.addEventListener("axeptio_ready", function () {
       window._axcb = window._axcb || [];
       window._axcb.push(function (sdk) {
-        if (sdk.hasConsented("hubspot")) {
-          // Injecte le tag GTM
-          var gtmScript = document.createElement("script");
-          gtmScript.src = "https://www.googletagmanager.com/gtm.js?id=GTM-55BBX5K4";
-          gtmScript.async = true;
-          document.head.appendChild(gtmScript);
-
-          // Injecte la balise noscript si jamais l'utilisateur n'a pas JS (peu probable ici)
-          var iframe = document.createElement("noscript");
-          iframe.innerHTML = '<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-55BBX5K4" height="0" width="0" style="display:none;visibility:hidden"></iframe>';
-          document.body.appendChild(iframe);
+        const hasConsent = sdk.hasConsented("hubspot");
+        if (hasConsent) {
+          loadHubSpotTracking(); // Injecte cookies & tracking HubSpot
+          loadHubSpotForm();     // Affiche le formulaire
+          // Envoi à GTM pour déclencher une balise personnalisée (optionnel)
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({
+            event: "axeptio_activate_hubspot",
+            axeptio_hubspot_consent: true
+          });
         }
       });
     });
