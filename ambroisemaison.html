@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Formulaire RGPD avec Axeptio + GTM + HubSpot</title>
+  <title>Test tracking HubSpot + Axeptio</title>
 
   <!-- Axeptio CMP -->
   <script>
@@ -13,25 +13,32 @@
   </script>
   <script async src="https://static.axept.io/sdk.js"></script>
 
-  <!-- HubSpot Form embed (ne dépose pas de cookies) -->
+  <!-- Formulaire HubSpot visible en permanence (sans tracking) -->
   <script src="https://js.hsforms.net/forms/embed/49153213.js" defer></script>
 </head>
 <body>
-  <!-- GTM noscript (uniquement actif si script GTM injecté) -->
-  <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-55BBX5K4"
-            height="0" width="0" style="display:none;visibility:hidden"></iframe>
-  </noscript>
+  <h1>Test formulaire RGPD + tracking HubSpot</h1>
 
-  <h1>Formulaire de contact</h1>
+  <p>
+    Ce test permet de valider : <br>
+    - Si le formulaire s'affiche sans cookies<br>
+    - Si le tracking HubSpot est conditionné au consentement Axeptio<br>
+    - Si les cookies HubSpot sont visibles après consentement<br>
+  </p>
+
   <div class="hs-form-frame"
        data-region="na1"
        data-form-id="1262a4d1-1496-4553-b70d-64bc1e676047"
        data-portal-id="49153213">
   </div>
 
+  <button onclick="logConsentStatus()" style="margin-top:2em;">
+    Afficher le statut de consentement Axeptio
+  </button>
+  <pre id="consent-log" style="background:#f5f5f5;padding:1em;margin-top:1em;"></pre>
+
+  <!-- GTM injection conditionnelle -->
   <script>
-    // Injection du script GTM si consentement Axeptio pour "hubspot"
     window.addEventListener("axeptio_ready", function () {
       window._axcb = window._axcb || [];
       window._axcb.push(function (sdk) {
@@ -43,6 +50,21 @@
         }
       });
     });
+
+    function logConsentStatus() {
+      if (!window._axcb) return;
+      window._axcb.push(function (sdk) {
+        const authorized = sdk.getAuthorizedVendors();
+        const all = sdk.getAllVendors();
+        const hasHubspot = sdk.hasConsented("hubspot");
+        const out = {
+          "Consent donné pour HubSpot ?": hasHubspot,
+          "Vendors autorisés": authorized,
+          "Tous les vendors disponibles": all
+        };
+        document.getElementById("consent-log").textContent = JSON.stringify(out, null, 2);
+      });
+    }
   </script>
 </body>
 </html>
