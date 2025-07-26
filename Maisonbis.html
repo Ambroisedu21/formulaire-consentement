@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Formulaire RGPD HubSpot + Axeptio</title>
+
+  <!-- Axeptio SDK -->
   <script>
     window.axeptioSettings = {
       clientId: "6884ca9941dcd3b723699bcc",
@@ -26,11 +28,22 @@
 </head>
 <body>
 
+  <h2>Inscription</h2>
+
   <form id="hubspot-custom-form">
-    <label>Prénom : <input type="text" name="firstname" required></label><br>
-    <label>Nom : <input type="text" name="lastname" required></label><br>
-    <label>Email : <input type="email" name="email" required></label><br>
-    <label><input type="checkbox" name="consent" required> J'accepte le traitement de mes données</label><br>
+    <label>Prénom :
+      <input type="text" name="firstname" required>
+    </label><br>
+    <label>Nom :
+      <input type="text" name="lastname" required>
+    </label><br>
+    <label>Email :
+      <input type="email" name="email" required>
+    </label><br>
+    <label>
+      <input type="checkbox" name="consent" required>
+      J'accepte le traitement de mes données personnelles
+    </label><br><br>
     <button type="submit">Envoyer</button>
   </form>
 
@@ -46,9 +59,11 @@
           { name: 'firstname', value: formData.get('firstname') },
           { name: 'lastname', value: formData.get('lastname') },
           { name: 'email', value: formData.get('email') }
-        ]
+        ],
+        context: {}
       };
 
+      // Envoi vers HubSpot sans tracking cookies
       try {
         const response = await fetch('https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bc1e676047', {
           method: 'POST',
