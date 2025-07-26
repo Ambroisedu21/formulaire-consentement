@@ -1,86 +1,33 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Formulaire RGPD HubSpot + Axeptio</title>
+<!-- 1. Google Tag Manager -->
+<script>
+;(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;
+  j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+  f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-55BBX5K4');
+</script>
 
-  <!-- Axeptio SDK -->
-  <script>
-    window.axeptioSettings = {
-      clientId: "6884ca9941dcd3b723699bcc",
-      cookiesVersion: "ambroisedu21-fr-EU",
-      googleConsentMode: {
-        default: {
-          analytics_storage: "denied",
-          ad_storage: "denied",
-          ad_user_data: "denied",
-          ad_personalization: "denied",
-          wait_for_update: 500
-        }
+<!-- 2. Axeptio SDK + settings -->
+<script>
+  window.axeptioSettings = {
+    clientId: "6884ca9941dcd3b723699bcc",
+    cookiesVersion: "ambroisedu21-fr-EU",
+    googleConsentMode: {
+      default: {
+        analytics_storage: "denied",
+        ad_storage:       "denied",
+        ad_user_data:     "denied",
+        ad_personalization:"denied",
+        wait_for_update:  500
       }
-    };
-    (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true; e.src = "//static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e, t);
-    })(document, "script");
-  </script>
-</head>
-<body>
-
-  <h2>Inscription</h2>
-
-  <form id="hubspot-custom-form">
-    <label>Prénom :
-      <input type="text" name="firstname" required>
-    </label><br>
-    <label>Nom :
-      <input type="text" name="lastname" required>
-    </label><br>
-    <label>Email :
-      <input type="email" name="email" required>
-    </label><br>
-    <label>
-      <input type="checkbox" name="consent" required>
-      J'accepte le traitement de mes données personnelles
-    </label><br><br>
-    <button type="submit">Envoyer</button>
-  </form>
-
-  <script>
-    const form = document.getElementById('hubspot-custom-form');
-
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-
-      const formData = new FormData(form);
-      const data = {
-        fields: [
-          { name: 'firstname', value: formData.get('firstname') },
-          { name: 'lastname', value: formData.get('lastname') },
-          { name: 'email', value: formData.get('email') }
-        ],
-        context: {}
-      };
-
-      // Envoi vers HubSpot sans tracking cookies
-      try {
-        const response = await fetch('https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bc1e676047', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-          alert('Formulaire envoyé avec succès !');
-        } else {
-          alert('Erreur lors de l’envoi du formulaire');
-        }
-      } catch (error) {
-        console.error('Erreur réseau :', error);
-      }
-    });
-  </script>
-
-</body>
-</html>
+    }
+  };
+  (function(d, s){
+    var t = d.getElementsByTagName(s)[0],
+        e = d.createElement(s);
+    e.async = true;
+    e.src   = "//static.axept.io/sdk.js";
+    t.parentNode.insertBefore(e, t);
+  })(document, "script");
+</script>
