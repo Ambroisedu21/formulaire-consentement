@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Formulaire HubSpot + Axeptio</title>
 
-  <!-- 1) Google Tag Manager (à remplacer GTM-55BBX5K4 par votre ID) -->
+  <!-- 1) Google Tag Manager -->
   <script>
     (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -88,7 +88,6 @@
       return match ? decodeURIComponent(match[2]) : null;
     }
 
-    // Écoute l'événement Axeptio (mais le chargement du script HubSpot se fait via GTM)
     window.addEventListener('axeptio_activate_hubspot', () => {
       console.log("Consentement HubSpot reçu");
     });
@@ -111,7 +110,6 @@
         }
       };
 
-      // Si le cookie HubSpot existe, on l'ajoute pour tracking
       const hutk = getCookie('hubspotutk');
       if (hutk) {
         payload.context.hutk = hutk;
