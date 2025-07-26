@@ -1,33 +1,151 @@
-<!-- 1. Google Tag Manager -->
-<script>
-;(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;
-  j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-  f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-55BBX5K4');
-</script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formulaire HubSpot + Axeptio</title>
 
-<!-- 2. Axeptio SDK + settings -->
-<script>
-  window.axeptioSettings = {
-    clientId: "6884ca9941dcd3b723699bcc",
-    cookiesVersion: "ambroisedu21-fr-EU",
-    googleConsentMode: {
-      default: {
-        analytics_storage: "denied",
-        ad_storage:       "denied",
-        ad_user_data:     "denied",
-        ad_personalization:"denied",
-        wait_for_update:  500
+  <!-- 1) Google Tag Manager (à remplacer GTM-55BBX5K4 par votre ID) -->
+  <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;
+    j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+    f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-55BBX5K4');
+  </script>
+
+  <!-- 2) Axeptio SDK + settings -->
+  <script>
+    window.axeptioSettings = {
+      clientId: "6884ca9941dcd3b723699bcc",
+      cookiesVersion: "ambroisedu21-fr-EU",
+      googleConsentMode: {
+        default: {
+          analytics_storage: "denied",
+          ad_storage:       "denied",
+          ad_user_data:     "denied",
+          ad_personalization:"denied",
+          wait_for_update:  500
+        }
       }
+    };
+    (function(d, s){
+      var t = d.getElementsByTagName(s)[0],
+          e = d.createElement(s);
+      e.async = true;
+      e.src   = "//static.axept.io/sdk.js";
+      t.parentNode.insertBefore(e, t);
+    })(document, "script");
+  </script>
+</head>
+<body>
+
+  <!-- 3) Google Tag Manager (noscript) -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-55BBX5K4"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+
+  <!-- 4) Votre formulaire “externe” -->
+  <div id="contact-form-container" style="max-width:400px; margin:2em auto;">
+    <form id="external-hubspot-form">
+      <div>
+        <label>Prénom<br>
+          <input type="text" id="firstname" name="firstname" required>
+        </label>
+      </div>
+      <div>
+        <label>Nom<br>
+          <input type="text" id="lastname" name="lastname" required>
+        </label>
+      </div>
+      <div>
+        <label>Email<br>
+          <input type="email" id="email" name="email" required>
+        </label>
+      </div>
+      <div style="margin-top:1em;">
+        <label>
+          <input type="checkbox" id="axeptio-consent" required>
+          J’accepte le traitement de mes données (RGPD)
+        </label>
+      </div>
+      <button type="submit" style="margin-top:1em;">Envoyer</button>
+    </form>
+    <div id="form-response"
+         style="display:none; margin-top:1em; color:green;"></div>
+  </div>
+
+  <!-- 5) Script de gestion de la soumission + HubSpot API -->
+  <script>
+  (function(){
+    const portalId = "49153213";
+    const formGuid = "1262a4d1-1496-4553-b70d-64bc1e676047";
+
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^| )'+ name +'=([^;]+)'));
+      return match ? decodeURIComponent(match[2]) : null;
     }
-  };
-  (function(d, s){
-    var t = d.getElementsByTagName(s)[0],
-        e = d.createElement(s);
-    e.async = true;
-    e.src   = "//static.axept.io/sdk.js";
-    t.parentNode.insertBefore(e, t);
-  })(document, "script");
-</script>
+
+    // Écoute l'événement Axeptio (mais le chargement du script HubSpot se fait via GTM)
+    window.addEventListener('axeptio_activate_hubspot', () => {
+      console.log("Consentement HubSpot reçu");
+    });
+
+    const form = document.getElementById('external-hubspot-form');
+    const responseBox = document.getElementById('form-response');
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+
+      const payload = {
+        fields: [
+          { name: "firstname", value: form.firstname.value },
+          { name: "lastname",  value: form.lastname.value },
+          { name: "email",     value: form.email.value }
+        ],
+        context: {
+          pageUri:  window.location.href,
+          pageName: document.title
+        }
+      };
+
+      // Si le cookie HubSpot existe, on l'ajoute pour tracking
+      const hutk = getCookie('hubspotutk');
+      if (hutk) {
+        payload.context.hutk = hutk;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: 'hubspot_form_submit', formGuid });
+      }
+
+      fetch(
+        `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formGuid}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }
+      )
+      .then(res => {
+        if (res.ok) {
+          responseBox.style.display = "block";
+          responseBox.style.color   = "green";
+          responseBox.innerText      = "Merci ! Votre demande a bien été prise en compte.";
+          form.reset();
+        } else {
+          return res.json().then(err => Promise.reject(err));
+        }
+      })
+      .catch(err => {
+        responseBox.style.display = "block";
+        responseBox.style.color   = "red";
+        responseBox.innerText      = "Oups ! Une erreur est survenue, veuillez réessayer.";
+        console.error(err);
+      });
+    });
+  })();
+  </script>
+
+</body>
+</html>
