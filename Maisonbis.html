@@ -9,9 +9,8 @@
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: 'gtm.js' });
   </script>
-  <script async src="https://www.googletagmanager.com/gtm.js?id=
-GTM-55BBX5K4"></script>
-  <!-- End Google Tag Manager (head)  [oai_citation:2‡Analytics Mania](https://www.analyticsmania.com/post/how-to-install-google-tag-manager/?utm_source=chatgpt.com) -->
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-55BBX5K4"></script>
+  <!-- End Google Tag Manager (head)  [oai_citation:0‡knowledge.hubspot.com](https://knowledge.hubspot.com/reports/install-the-hubspot-tracking-code?utm_source=chatgpt.com) -->
 
   <!-- 2) Axeptio SDK -->
   <script>
@@ -29,40 +28,86 @@ GTM-55BBX5K4"></script>
       }
     };
     (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      var t = d.getElementsByTagName(s)[0],
+          e = d.createElement(s);
       e.async = true;
       e.src = "//static.axept.io/sdk.js";
+      e.id = "axeptio-sdk";
       t.parentNode.insertBefore(e, t);
     })(document, "script");
   </script>
-  <!-- End Axeptio SDK -->
+  <!-- End Axeptio SDK  [oai_citation:1‡docs.partnerstack.com](https://docs.partnerstack.com/docs/hubspot-forms-iframe?utm_source=chatgpt.com) -->
+
+  <!-- 3) HubSpot Tracking Code (injection après consentement Axeptio) -->
+  <script>
+    function loadHubSpotTracking(){
+      if (document.getElementById('hs-script-loader')) return;
+      var s = document.createElement('script');
+      s.type = 'text/javascript';
+      s.id = 'hs-script-loader';
+      s.async = true;
+      s.defer = true;
+      s.src = '//js.hs-scripts.com/49153213.js';
+      document.head.appendChild(s);
+    }
+
+    // Dès que Axeptio est chargé et initialisé
+    window.addEventListener('axeptio_initialized', function(){
+      if (window.axeptio_hubspot === true) {
+        loadHubSpotTracking();
+      }
+    });
+
+    // Si Axeptio a déjà initialisé avant l'écouteur
+    if (window.axeptio_hubspot === true) {
+      loadHubSpotTracking();
+    }
+  </script>
+  <!-- End Conditional HubSpot Tracking  [oai_citation:2‡HubSpot Développeurs](https://developers.hubspot.com/docs/reference/api/analytics-and-events/tracking-code?utm_source=chatgpt.com) -->
 </head>
 <body>
 
-  <!-- 3) Google Tag Manager (noscript) -->
+  <!-- 4) Google Tag Manager (noscript) -->
   <noscript>
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-55BBX5K4"
             height="0" width="0" style="display:none;visibility:hidden"></iframe>
   </noscript>
-  <!-- End GTM (noscript)  [oai_citation:3‡Analytics Mania](https://www.analyticsmania.com/post/how-to-install-google-tag-manager/?utm_source=chatgpt.com) -->
+  <!-- End GTM (noscript)  [oai_citation:3‡knowledge.hubspot.com](https://knowledge.hubspot.com/reports/install-the-hubspot-tracking-code?utm_source=chatgpt.com) -->
 
-  <!-- 4) HubSpot Form (toujours chargé) -->
-  <script src="https://js.hsforms.net/forms/embed/49153213.js" defer></script>
-  <div class="hs-form-frame"
-       data-region="na1"
-       data-form-id="1262a4d1-1496-4553-b70d-64bc1e676047"
-       data-portal-id="49153213"></div>
-  <!-- End HubSpot Embed  [oai_citation:4‡knowledge.hubspot.com](https://knowledge.hubspot.com/forms/how-can-i-share-a-hubspot-form-if-im-using-an-external-site?utm_source=chatgpt.com) -->
-
-  <!-- 5) (Optionnel) Si vous voulez contrôler vous-même la soumission via JS/API -->
+  <!-- 5) HubSpot Form Embed v2 (toujours chargé) -->
+  <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/embed/v2.js" defer></script>
+  <div id="hs-form-target"></div>
   <script>
-    document.addEventListener('hsFormCallback', function(e) {
-      // hsFormCallback est un événement HubSpot natif si besoin
-      // Vous pouvez aussi intercepter le submit natif et faire un fetch vers l’API v3
-      // Exemple :
-      // if (window.privacy_consent_type === true) { …submit via fetch… }
+    document.addEventListener('DOMContentLoaded', function() {
+      hbspt.forms.create({
+        region: "na1",
+        portalId: "49153213",
+        formId: "1262a4d1-1496-4553-b70d-64bc1e676047",
+        target: "#hs-form-target",
+        onFormSubmit: function($form) {
+          // Interception native pour envoi via API v3 si nécessaire
+          if (window.axeptio_hubspot === true) {
+            var fields = $form.serializeArray().map(function(f){
+              return { name: f.name, value: f.value };
+            });
+            fetch(
+              'https://api.hsforms.com/submissions/v3/integration/secure/submit/49153213/1262a4d1-1496-4553-b70d-64bc1e676047',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields: fields })
+              }
+            ).then(function(res){
+              if (!res.ok) {
+                console.error('Erreur soumission API HubSpot', res.status);
+              }
+            });
+          }
+        }
+      });
     });
   </script>
+  <!-- End HubSpot Form Embed  [oai_citation:4‡Stack Overflow](https://stackoverflow.com/questions/35810023/how-to-embed-a-hubspot-form-in-an-external-site?utm_source=chatgpt.com) -->
 
 </body>
 </html>
