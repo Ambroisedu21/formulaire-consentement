@@ -2,7 +2,22 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Formulaire Nostrum Care - RGPD & Axeptio</title>
+  <title>Formulaire Nostrum Care - RGPD & Axeptio & GTM</title>
+
+  <!-- Google Tag Manager -->
+  <script>
+    (function(w,d,s,l,i){
+      w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+      var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),
+          dl=l!='dataLayer'?'&l='+l:'';
+      j.async=true;
+      j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+      f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-XXXXXXX');  <!-- Remplace par ton ID GTM -->
+  </script>
+  <!-- End Google Tag Manager -->
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,7 +29,7 @@
       margin: 0 auto;
       background: white;
       padding: 1.5rem 2rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       border-radius: 6px;
     }
     h2 {
@@ -75,6 +90,13 @@
 </head>
 <body>
 
+  <!-- Google Tag Manager (noscript) -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
   <form id="custom-hs-form" novalidate>
     <h2>Mon devis en 1 minute</h2>
 
@@ -99,11 +121,11 @@
 
   <div id="tracking-status" aria-live="polite" role="status"></div>
 
-  <!-- Axeptio SDK -->
+  <!-- SDK Axeptio -->
   <script>
     window.axeptioSettings = {
-      clientId: "6884ca9941dcd3b723699bcc",
-      cookiesVersion: "ambroisedu21-fr-EU",
+      clientId: "6884ca9941dcd3b723699bcc",    // Ton clientId Axeptio
+      cookiesVersion: "ambroisedu21-fr-EU",    // Version cookies Axeptio
       googleConsentMode: {
         default: {
           analytics_storage: "denied",
@@ -114,69 +136,23 @@
         }
       }
     };
-    (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true; e.src = "//static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e, t);
-    })(document, "script");
+    (function(d,s){
+      var t=d.getElementsByTagName(s)[0], e=d.createElement(s);
+      e.async=true; e.src="//static.axept.io/sdk.js";
+      t.parentNode.insertBefore(e,t);
+    })(document,"script");
   </script>
 
   <script>
-    // Fonction pour récupérer la valeur d'un cookie par son nom
+    // Fonction utilitaire pour récupérer valeur cookie (ex hubspotutk)
     function getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
       if (parts.length === 2) return parts.pop().split(';').shift();
-      return null;
+      return '';
     }
 
-    // Injection dynamique du script HubSpot pour le tracking
-    let trackingInjected = false;
-    function injectHubspotTrackingScript() {
-      if (trackingInjected) return;
-      trackingInjected = true;
-      if (document.getElementById('hs-script-loader')) return;
-
-      const script = document.createElement('script');
-      script.id = 'hs-script-loader';
-      script.async = true;
-      script.defer = true;
-      script.src = '//js.hs-scripts.com/49153213.js';
-
-      script.onload = () => {
-        console.log('Script HubSpot chargé');
-        document.getElementById('tracking-status').textContent = 'Tracking HubSpot activé 🟢';
-        if (window._hsq) {
-          window._hsq.push(['trackPageView']);
-        }
-      };
-
-      document.head.appendChild(script);
-    }
-
-    window.addEventListener('axeptio_ready', () => {
-      if (!window.axeptioSDK) {
-        console.warn('Axeptio SDK non chargé');
-        return;
-      }
-
-      function checkConsentAndInject(choices) {
-        if (choices['hubspot'] === true) {
-          injectHubspotTrackingScript();
-        }
-      }
-
-      // Contrôle initial des consentements
-      const currentChoices = axeptioSDK.getChoices();
-      if (currentChoices) checkConsentAndInject(currentChoices);
-
-      // Écoute des changements de consentement
-      axeptioSDK.on('cookies:complete', (choices) => {
-        checkConsentAndInject(choices);
-      });
-    });
-
-    // Soumission formulaire vers HubSpot via API Forms v3
+    // Soumission formulaire vers HubSpot via Forms API v3
     document.getElementById('custom-hs-form').addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = event.target;
@@ -186,10 +162,8 @@
         return;
       }
 
-      // Récupérer les données du formulaire
       const formData = new FormData(form);
 
-      // Préparer les données pour HubSpot
       const submissionData = {
         fields: [
           { name: 'firstname', value: formData.get('firstname') },
@@ -197,7 +171,7 @@
           { name: 'email', value: formData.get('email') }
         ],
         context: {
-          hutk: getCookie('hubspotutk') || '',  // prise en compte du cookie HubSpot si présent
+          hutk: getCookie('hubspotutk') || '', // Si tracking HubSpot actif, sinon vide
           pageUri: window.location.href,
           pageName: document.title
         },
@@ -209,8 +183,9 @@
         }
       };
 
-      const portalId = "49153213";
-      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
+      const portalId = "49153213"; // Ton Portal ID HubSpot
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047"; // Ton Form ID HubSpot
+
       const apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       try {
