@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Formulaire Nostrum Care - RGPD & Axeptio</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+      background: white;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+      border-radius: 6px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #0f4c81;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: #0f4c81;
+    }
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-top: 0.25rem;
+      box-sizing: border-box;
+      font-weight: 400;
+    }
+    .consent-container {
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .consent-container label {
+      font-weight: normal;
+      color: #444;
+    }
+    button {
+      width: 100%;
+      background-color: #0f4c81;
+      border: none;
+      color: white;
+      padding: 0.75rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #06355a;
+    }
+    #tracking-status {
+      max-width: 400px;
+      margin: 1rem auto;
+      text-align: center;
+      font-size: 0.9rem;
+      color: green;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <form id="custom-hs-form" novalidate>
+    <h2>Mon devis en 1 minute</h2>
+
+    <label for="firstname">Prénom*</label>
+    <input type="text" id="firstname" name="firstname" required autocomplete="given-name" />
+
+    <label for="lastname">Nom*</label>
+    <input type="text" id="lastname" name="lastname" required autocomplete="family-name" />
+
+    <label for="email">Email*</label>
+    <input type="email" id="email" name="email" required autocomplete="email" />
+
+    <div class="consent-container">
+      <label>
+        <input type="checkbox" name="rgpd_consent" id="rgpd_consent" required />
+        J’accepte le traitement de mes données selon la <a href="/confidentialite" target="_blank" rel="noopener">politique de confidentialité</a>.
+      </label>
+    </div>
+
+    <button type="submit" aria-label="Envoyer le formulaire">Obtenir mon tarif</button>
+  </form>
+
+  <div id="tracking-status" aria-live="polite" role="status"></div>
+
+  <!-- Axeptio SDK -->
+  <script>
+    // Paramètres Axeptio : remplace par ton clientId réel
+    window.axeptioSettings = {
+      clientId: "6880d227f0b041d2ff94a814",
+    };
+  </script>
+  <script src="https://static.axept.io/sdk.js" async></script>
+
+  <script>
+    // Injection dynamique du tracking HubSpot selon consentement Axeptio
+    let trackingInjected = false; // évite double injection
+
+    function injectHubspotTrackingScript() {
+      if (trackingInjected) return;
+      trackingInjected = true;
+      const d = document;
+      if (d.getElementById('hs-script-loader')) return;
+      const script = d.createElement('script');
+      script.id = 'hs-script-loader';
+      script.async = true;
+      script.defer = true;
+      script.src = '//js.hs-scripts.com/49153213.js';
+      d.head.appendChild(script);
+      document.getElementById('tracking-status').textContent = 'Tracking HubSpot activé 🟢';
+      console.log('Tracking HubSpot chargé');
+    }
+
+    window.addEventListener('axeptio_ready', function () {
+      if (!window.axeptioSDK) {
+        console.warn('Axeptio SDK non trouvé');
+        return;
+      }
+
+      // Vérifier consentement déjà donné au chargement
+      let choices = axeptioSDK.getChoices();
+      if (choices && choices['hubspot'] === true) {
+        injectHubspotTrackingScript();
+      }
+
+      // Écouter les changements éventuels du consentement
+      axeptioSDK.on('cookies:complete', function (updatedChoices) {
+        if (updatedChoices['hubspot'] === true) {
+          injectHubspotTrackingScript();
+        }
+      });
+    });
+  </script>
+
+  <script>
+    // Soumission du formulaire vers API HubSpot Forms v3
+    document.getElementById('custom-hs-form').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const form = event.target;
+      if (!form.checkValidity()) {
+        // Pour afficher les messages du navigateur pour les champs requis
+        form.reportValidity();
+        return;
+      }
+
+      // Récupérer les données du formulaire
+      const formData = new FormData(form);
+
+      const dataToSend = {
+        fields: [
+          { name: 'firstname', value: formData.get('firstname') },
+          { name: 'lastname', value: formData.get('lastname') },
+          { name: 'email', value: formData.get('email') }
+        ],
+        legalConsentOptions: {
+          consent: {
+            consentToProcess: true,
+            text: "En soumettant ce formulaire, j’accepte le traitement de mes données par Nostrum Care conformément à la politique de confidentialité."
+          }
+        }
+      };
+
+      // URL d'API HubSpot - renseigne tes propres IDs
+      const portalId = "49153213";
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
+      const apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(dataToSend)
+        });
+
+        if (response.ok) {
+          alert('Formulaire soumis avec succès ! Merci.');
+          form.reset();
+        } else {
+          alert('Une erreur est survenue lors de la soumission. Merci de réessayer.');
+          console.error('Erreur API HubSpot:', await response.text());
+        }
+      } catch (error) {
+        alert('Impossible de soumettre le formulaire. Vérifiez votre connexion.');
+        console.error('Erreur soumission formulaire:', error);
+      }
+    });
+  </script>
+
+</body>
+</html>
