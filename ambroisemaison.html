@@ -1,53 +1,113 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Formulaire de contact RGPD</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Initialisation Axeptio -->
-  <script>
-    window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
-    };
-  </script>
-  <script async src="https://static.axept.io/sdk.js"></script>
-</head>
-<body>
-
-  <h1>Formulaire de contact</h1>
-  <div class="hs-form-frame"
-       data-region="na1"
-       data-form-id="1262a4d1-1496-4553-b70d-64bc1e676047"
-       data-portal-id="49153213">
-  </div>
-
-  <!-- Injection conditionnelle du script HubSpot après consentement Axeptio -->
-  <script>
-    window._axcb = window._axcb || [];
-    window._axcb.push(function (sdk) {
-      const hasConsented = sdk.hasConsented("hubspot");
-
-      // Si consentement explicite pour HubSpot, injection du script
-      if (hasConsented) {
-        const hsScript = document.createElement("script");
-        hsScript.type = "text/javascript";
-        hsScript.async = true;
-        hsScript.defer = true;
-        hsScript.src = "https://js.hs-scripts.com/49153213.js";
-        document.head.appendChild(hsScript);
-      }
-    });
-
-    // Chargement dynamique du formulaire HTML via embed script HubSpot
-    (function () {
-      const embedScript = document.createElement("script");
-      embedScript.src = "https://js.hsforms.net/forms/embed/49153213.js";
-      embedScript.async = true;
-      document.head.appendChild(embedScript);
-    })();
-  </script>
-
-</body>
-</html>
+diff --git a//dev/null b/external-form.html
+index 0000000000000000000000000000000000000000..e76d8967b32eff5685d29d4586ec7fce72de2f57 100644
+--- a//dev/null
++++ b/external-form.html
+@@ -0,0 +1,108 @@
++<!DOCTYPE html>
++<html lang="fr">
++<head>
++  <meta charset="UTF-8" />
++  <title>Formulaire externe avec consentement Axeptio</title>
++  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++  <style>
++    body { font-family: Arial, sans-serif; padding: 2em; }
++    form label { display: block; margin-top: 1em; }
++    input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
++    button { margin-top: 1em; padding: 0.5em 1em; }
++    .message { margin-top: 1em; font-weight: bold; }
++  </style>
++</head>
++<body>
++  <h1>Formulaire de contact</h1>
++  <form id="contactForm">
++    <label for="firstname">Prénom :</label>
++    <input type="text" id="firstname" name="firstname" required>
++
++    <label for="lastname">Nom :</label>
++    <input type="text" id="lastname" name="lastname" required>
++
++    <label for="phone">Téléphone :</label>
++    <input type="tel" id="phone" name="phone" required>
++
++    <label style="margin-top:1em;font-size:0.9em;">
++      <input type="checkbox" id="dataConsent" required>
++      En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
++    </label>
++
++    <button type="submit">Envoyer</button>
++  </form>
++  <div class="message" id="message"></div>
++
++  <!-- Axeptio SDK -->
++  <script>
++    window.axeptioSettings = {
++      clientId: "6880d227f0b041d2ff94a814",
++      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
++    };
++    (function(d, s) {
++      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
++      e.async = true; e.src = "//static.axept.io/sdk.js";
++      t.parentNode.insertBefore(e, t);
++    })(document, "script");
++  </script>
++
++  <script>
++    // Injecte le script de tracking HubSpot uniquement si consentement Axeptio
++    window._axcb = window._axcb || [];
++    window._axcb.push(function(axeptio) {
++      if (axeptio.hasConsented("hubspot")) {
++        const hs = document.createElement("script");
++        hs.src = "https://js.hs-scripts.com/49153213.js";
++        hs.async = true;
++        hs.defer = true;
++        document.head.appendChild(hs);
++      }
++    });
++
++    // Soumission du formulaire via l'API HubSpot
++    document.getElementById('contactForm').addEventListener('submit', async function(e){
++      e.preventDefault();
++      const form = e.target;
++
++      // Vérifie le consentement cookies depuis Axeptio
++      let cookiesAccepted = false;
++      if (window._axcb) {
++        try {
++          cookiesAccepted = await new Promise(resolve => {
++            window._axcb.push(sdk => resolve(sdk.hasConsented('hubspot')));
++          });
++        } catch (err) {}
++      }
++
++      const data = {
++        fields: [
++          {name: 'firstname', value: form.firstname.value},
++          {name: 'lastname', value: form.lastname.value},
++          {name: 'phone', value: form.phone.value}
++        ],
++        context: cookiesAccepted ? {
++          pageUri: window.location.href,
++          pageName: 'Formulaire externe'
++        } : {}
++      };
++
++      const portalId = '49153213';
++      const formId = '1262a4d1-1496-4553-b70d-64bc1e676047';
++      const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
++
++      try {
++        const res = await fetch(url, {
++          method: 'POST',
++          headers: {'Content-Type': 'application/json'},
++          body: JSON.stringify(data)
++        });
++        document.getElementById('message').textContent = res.ok ?
++          'Formulaire envoyé avec succès !' : 'Erreur lors de l\'envoi.';
++        if (res.ok) form.reset();
++      } catch (err) {
++        document.getElementById('message').textContent = 'Erreur réseau.';
++      }
++    });
++  </script>
++</body>
++</html>
