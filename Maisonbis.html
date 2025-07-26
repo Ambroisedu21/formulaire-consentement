@@ -14,7 +14,7 @@
       margin: 0 auto;
       background: white;
       padding: 1.5rem 2rem;
-      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       border-radius: 6px;
     }
     h2 {
@@ -99,68 +99,93 @@
 
   <div id="tracking-status" aria-live="polite" role="status"></div>
 
-  <!-- Axeptio SDK -->
+  <!-- Intégration SDK Axeptio avec tes paramètres -->
   <script>
-    // Paramètres Axeptio : remplace par ton clientId réel
     window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
+      clientId: "6884ca9941dcd3b723699bcc",
+      cookiesVersion: "ambroisedu21-fr-EU",
+      googleConsentMode: {
+        default: {
+          analytics_storage: "denied",
+          ad_storage: "denied",
+          ad_user_data: "denied",
+          ad_personalization: "denied",
+          wait_for_update: 500
+        }
+      }
     };
+
+    (function(d, s) {
+      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+      e.async = true; e.src = "//static.axept.io/sdk.js";
+      t.parentNode.insertBefore(e, t);
+    })(document, "script");
   </script>
-  <script src="https://static.axept.io/sdk.js" async></script>
 
   <script>
-    // Injection dynamique du tracking HubSpot selon consentement Axeptio
-    let trackingInjected = false; // évite double injection
+    // Fonction pour injecter le script HubSpot dynamiquement
+    let trackingInjected = false;
 
     function injectHubspotTrackingScript() {
       if (trackingInjected) return;
       trackingInjected = true;
-      const d = document;
-      if (d.getElementById('hs-script-loader')) return;
-      const script = d.createElement('script');
+      if (document.getElementById('hs-script-loader')) return;
+
+      const script = document.createElement('script');
       script.id = 'hs-script-loader';
       script.async = true;
       script.defer = true;
       script.src = '//js.hs-scripts.com/49153213.js';
-      d.head.appendChild(script);
-      document.getElementById('tracking-status').textContent = 'Tracking HubSpot activé 🟢';
-      console.log('Tracking HubSpot chargé');
+
+      script.onload = () => {
+        console.log('Script HubSpot chargé');
+        document.getElementById('tracking-status').textContent = 'Tracking HubSpot activé 🟢';
+        if (window._hsq) {
+          window._hsq.push(['trackPageView']);
+        }
+      };
+
+      document.head.appendChild(script);
     }
 
-    window.addEventListener('axeptio_ready', function () {
+    // Gestion du consentement Axeptio et injection conditionnelle
+    window.addEventListener('axeptio_ready', () => {
       if (!window.axeptioSDK) {
-        console.warn('Axeptio SDK non trouvé');
+        console.warn('Axeptio SDK non chargé');
         return;
       }
 
-      // Vérifier consentement déjà donné au chargement
-      let choices = axeptioSDK.getChoices();
-      if (choices && choices['hubspot'] === true) {
-        injectHubspotTrackingScript();
-      }
-
-      // Écouter les changements éventuels du consentement
-      axeptioSDK.on('cookies:complete', function (updatedChoices) {
-        if (updatedChoices['hubspot'] === true) {
+      const checkConsentAndInject = (choices) => {
+        // Le nom ici doit correspondre exactement au nom de la catégorie dans Axeptio
+        if (choices['hubspot'] === true) {
           injectHubspotTrackingScript();
         }
+      };
+
+      // Vérifie le consentement actuel au chargement
+      const currentChoices = axeptioSDK.getChoices();
+      if (currentChoices) {
+        checkConsentAndInject(currentChoices);
+      }
+
+      // Écoute les modifications de consentement
+      axeptioSDK.on('cookies:complete', (choices) => {
+        checkConsentAndInject(choices);
       });
     });
   </script>
 
   <script>
-    // Soumission du formulaire vers API HubSpot Forms v3
-    document.getElementById('custom-hs-form').addEventListener('submit', async function (event) {
+    // Soumission du formulaire vers l'API HubSpot Forms v3
+    document.getElementById('custom-hs-form').addEventListener('submit', async (event) => {
       event.preventDefault();
 
       const form = event.target;
       if (!form.checkValidity()) {
-        // Pour afficher les messages du navigateur pour les champs requis
         form.reportValidity();
         return;
       }
 
-      // Récupérer les données du formulaire
       const formData = new FormData(form);
 
       const dataToSend = {
@@ -177,17 +202,14 @@
         }
       };
 
-      // URL d'API HubSpot - renseigne tes propres IDs
       const portalId = "49153213";
       const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
-      const apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bc1e676047`;
+      const apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       try {
         const response = await fetch(apiUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dataToSend)
         });
 
