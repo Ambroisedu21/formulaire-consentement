@@ -99,7 +99,7 @@
 
   <div id="tracking-status" aria-live="polite" role="status"></div>
 
-  <!-- Intégration SDK Axeptio avec tes paramètres -->
+  <!-- Axeptio SDK -->
   <script>
     window.axeptioSettings = {
       clientId: "6884ca9941dcd3b723699bcc",
@@ -114,7 +114,6 @@
         }
       }
     };
-
     (function(d, s) {
       var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
       e.async = true; e.src = "//static.axept.io/sdk.js";
@@ -123,9 +122,16 @@
   </script>
 
   <script>
-    // Fonction pour injecter le script HubSpot dynamiquement
-    let trackingInjected = false;
+    // Fonction pour récupérer la valeur d'un cookie par son nom
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
 
+    // Injection dynamique du script HubSpot pour le tracking
+    let trackingInjected = false;
     function injectHubspotTrackingScript() {
       if (trackingInjected) return;
       trackingInjected = true;
@@ -148,52 +154,53 @@
       document.head.appendChild(script);
     }
 
-    // Gestion du consentement Axeptio et injection conditionnelle
     window.addEventListener('axeptio_ready', () => {
       if (!window.axeptioSDK) {
         console.warn('Axeptio SDK non chargé');
         return;
       }
 
-      const checkConsentAndInject = (choices) => {
-        // Le nom ici doit correspondre exactement au nom de la catégorie dans Axeptio
+      function checkConsentAndInject(choices) {
         if (choices['hubspot'] === true) {
           injectHubspotTrackingScript();
         }
-      };
-
-      // Vérifie le consentement actuel au chargement
-      const currentChoices = axeptioSDK.getChoices();
-      if (currentChoices) {
-        checkConsentAndInject(currentChoices);
       }
 
-      // Écoute les modifications de consentement
+      // Contrôle initial des consentements
+      const currentChoices = axeptioSDK.getChoices();
+      if (currentChoices) checkConsentAndInject(currentChoices);
+
+      // Écoute des changements de consentement
       axeptioSDK.on('cookies:complete', (choices) => {
         checkConsentAndInject(choices);
       });
     });
-  </script>
 
-  <script>
-    // Soumission du formulaire vers l'API HubSpot Forms v3
+    // Soumission formulaire vers HubSpot via API Forms v3
     document.getElementById('custom-hs-form').addEventListener('submit', async (event) => {
       event.preventDefault();
-
       const form = event.target;
+
       if (!form.checkValidity()) {
         form.reportValidity();
         return;
       }
 
+      // Récupérer les données du formulaire
       const formData = new FormData(form);
 
-      const dataToSend = {
+      // Préparer les données pour HubSpot
+      const submissionData = {
         fields: [
           { name: 'firstname', value: formData.get('firstname') },
           { name: 'lastname', value: formData.get('lastname') },
           { name: 'email', value: formData.get('email') }
         ],
+        context: {
+          hutk: getCookie('hubspotutk') || '',  // prise en compte du cookie HubSpot si présent
+          pageUri: window.location.href,
+          pageName: document.title
+        },
         legalConsentOptions: {
           consent: {
             consentToProcess: true,
@@ -204,21 +211,22 @@
 
       const portalId = "49153213";
       const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
-      const apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/49153213/1262a4d1-1496-4553-b70d-64bc1e676047`;
+      const apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       try {
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dataToSend)
+          body: JSON.stringify(submissionData)
         });
 
         if (response.ok) {
           alert('Formulaire soumis avec succès ! Merci.');
           form.reset();
         } else {
+          const errorText = await response.text();
           alert('Une erreur est survenue lors de la soumission. Merci de réessayer.');
-          console.error('Erreur API HubSpot:', await response.text());
+          console.error('Erreur API HubSpot:', errorText);
         }
       } catch (error) {
         alert('Impossible de soumettre le formulaire. Vérifiez votre connexion.');
