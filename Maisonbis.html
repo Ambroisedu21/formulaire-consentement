@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Page avec consentement Axeptio → HubSpot</title>
+  <title>Formulaire + Consentement Axeptio → HubSpot</title>
 
   <!-- 1) Axeptio SDK & settings -->
   <script>
@@ -20,7 +20,7 @@
     })(document, "script");
   </script>
 
-  <!-- 2) Cacher par défaut toute UI HubSpot -->
+  <!-- 2) On masque par défaut toute UI HubSpot (bannières natives) -->
   <style>
     .hs-cookie-message,
     .cookie-banner,
@@ -31,36 +31,123 @@
 </head>
 <body>
 
-  <!-- Votre contenu… -->
+  <!-- 3) Votre formulaire externe — toujours visible -->
+  <div id="contact-form-container" style="max-width:400px; margin:2em auto;">
+    <form id="external-hubspot-form">
+      <div>
+        <label>Prénom<br>
+          <input type="text" name="firstname" required>
+        </label>
+      </div>
+      <div>
+        <label>Nom<br>
+          <input type="text" name="lastname" required>
+        </label>
+      </div>
+      <div>
+        <label>Email<br>
+          <input type="email" name="email" required>
+        </label>
+      </div>
+      <div style="margin-top:1em;">
+        <label>
+          <input type="checkbox" id="axeptio-consent" required>
+          J’accepte le traitement de mes données (RGPD)
+        </label>
+      </div>
+      <button type="submit" style="margin-top:1em;">Envoyer</button>
+    </form>
+    <div id="form-response" style="display:none; margin-top:1em;"></div>
+  </div>
 
-  <!-- 3) Écoute du consentement & injection HubSpot -->
+  <!-- 4) Gestion du consentement + injection HubSpot + envoi du formulaire -->
   <script>
   (function(){
-    var hubspotLoaded = false;
+    const portalId = "49153213";
+    const formGuid = "1262a4d1-1496-4553-b70d-64bc1e676047";
+
+    // utilitaires cookies
+    function getCookie(name) {
+      const m = document.cookie.match(new RegExp('(^| )'+ name +'=([^;]+)'));
+      return m ? decodeURIComponent(m[2]) : null;
+    }
+    function setCookie(name, value, maxAgeSec) {
+      document.cookie = [
+        `${name}=${encodeURIComponent(value)}`,
+        `Path=/`,
+        `Max-Age=${maxAgeSec}`,
+        `SameSite=None`,
+        `Secure`
+      ].join(';');
+    }
+
+    // Injection du script HubSpot
+    let hubspotLoaded = false;
     function loadHubSpot() {
       if (hubspotLoaded) return;
       hubspotLoaded = true;
-      var s = document.createElement("script");
+      const s = document.createElement("script");
       s.id    = "hs-script-loader";
       s.async = true;
       s.defer = true;
       s.src   = "https://js.hs-scripts.com/49153213.js";
       document.head.appendChild(s);
-      console.log("✅ Script HubSpot injecté");
+      console.log("✅ HubSpot tracking chargé");
     }
 
-    // Si l’utilisateur avait déjà validé avant rechargement de page,
-    // Axeptio peut stocker un cookie “authorized_vendors”.
-    // On peut vérifier la présence de “hubspot” dedans et injecter d’emblée :
-    var av = document.cookie.match(/(?:^|; )axeptio_authorized_vendors=([^;]+)/);
-    if (av && av[1].split(",").indexOf("hubspot") !== -1) {
+    // Si déjà consenti précédemment, on injecte au chargement
+    const av = getCookie('axeptio_authorized_vendors');
+    if (av && av.split(',').includes('hubspot')) {
       loadHubSpot();
     }
 
-    // Quand Axeptio émet l’événement de consentement HubSpot :
-    window.addEventListener("axeptio_activate_hubspot", loadHubSpot);
+    // Quand Axeptio émet l'événement de consentement HubSpot
+    window.addEventListener("axeptio_activate_hubspot", () => {
+      console.log("🎉 axeptio_activate_hubspot");
+      // on enregistre le choix dans les cookies Axeptio (1 an)
+      const maxAge = 365*24*60*60;
+      setCookie('axeptio_authorized_vendors', 'hubspot', maxAge);
+      setCookie('axeptio_cookies', JSON.stringify({ hubspot: true }), maxAge);
+      // puis on injecte HubSpot
+      loadHubSpot();
+    });
+
+    // Soumission du formulaire
+    const form = document.getElementById('external-hubspot-form');
+    const resp = document.getElementById('form-response');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const data = {
+        fields: [
+          { name:"firstname", value: form.firstname.value },
+          { name:"lastname",  value: form.lastname.value },
+          { name:"email",     value: form.email.value }
+        ],
+        context: {
+          pageUri:  window.location.href,
+          pageName: document.title
+        }
+      };
+      // si hubspotutk existe, on l'ajoute
+      const hutk = getCookie('hubspotutk');
+      if (hutk) data.context.hutk = hutk;
+
+      fetch(`https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formGuid}`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      })
+      .then(r => r.ok
+        ? resp.style.cssText="display:block;color:green;margin-top:1em", resp.innerText="Merci ! Formulaire soumis."
+        : Promise.reject(r.statusText)
+      )
+      .catch(err => {
+        resp.style.cssText="display:block;color:red;margin-top:1em";
+        resp.innerText = "Une erreur est survenue.";
+        console.error(err);
+      });
+    });
   })();
   </script>
-
 </body>
 </html>
