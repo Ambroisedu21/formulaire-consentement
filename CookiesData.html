@@ -109,8 +109,8 @@
   <!-- SDK Axeptio -->
   <script>
     window.axeptioSettings = {
-      clientId: "ID axeptio",
-      cookiesVersion: "Version lien axeptio"
+      clientId: "6880d227f0b041d2ff94a814",
+      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
     };
     (function(d, s) {
       var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
@@ -126,7 +126,7 @@
       axeptio.on("cookies:complete", function(choices) {
         if (choices && choices.hubspot) {
           const script = document.createElement("script");
-          script.src = "https://js.hs-scripts.com/[ID HUBSPOT].js";
+          script.src = "https://js.hs-scripts.com/49153213.js";
           script.type = "text/javascript";
           script.async = true;
           script.defer = true;
@@ -168,8 +168,8 @@
         } : {}
       };
 
-      const portalId = "[ID HUBSPOT]";
-      const formId = "[ID FORM]";
+      const portalId = "49153213";
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
       const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       try {
