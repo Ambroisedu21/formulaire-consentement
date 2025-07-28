@@ -1,47 +1,103 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Formulaire RGPD</title>
+  <title>Formulaire RGPD - NostrumCare</title>
   <style>
-    body { font-family: Arial; padding: 2em; }
-    .cookie-banner {
-      position: fixed; bottom: 0; width: 100%; background: #eee;
-      padding: 1em; border-top: 1px solid #ccc; text-align: center;
+    body { font-family: Arial; padding: 2em; background-color: #fdf0e0; }
+
+    form { max-width: 400px; margin: auto; }
+
+    h1 { color: #6f1a7d; font-size: 1.5em; }
+
+    label { display: block; margin-top: 1em; }
+
+    input, select {
+      width: 100%;
+      padding: 0.6em;
+      margin-top: 0.3em;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
     }
-    .hidden { display: none; }
-    form label { display: block; margin-top: 1em; }
-    input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
-    button { margin-top: 1em; padding: 0.5em 1em; }
+
+    button {
+      margin-top: 1.5em;
+      background-color: #f061a3;
+      color: white;
+      padding: 0.7em 1em;
+      font-weight: bold;
+      border: none;
+      border-radius: 25px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    button:hover { background-color: #e04991; }
+
     .message { margin-top: 1em; font-weight: bold; }
+
+    .cookie-banner {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #fff6f0;
+      padding: 1em;
+      border-top: 1px solid #ccc;
+      text-align: center;
+      font-size: 0.9em;
+    }
+
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <h1>Formulaire de contact</h1>
-  <div id="formulaire">
-    <form id="contactForm">
-      <label for="firstname">Prénom :</label>
-      <input type="text" id="firstname" name="firstname" required>
-      
-      <label for="lastname">Nom :</label>
-      <input type="text" id="lastname" name="lastname" required>
 
-      <label for="email">Email :</label>
-      <input type="email" id="email" name="email" required>
+  <h1>Mon devis en 1 minute</h1>
+  <p>Nous avons besoin de ces informations pour établir un tarif</p>
 
-      <label style="margin-top: 1em; font-size: 0.9em;">
-        <input type="checkbox" required>
-        En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
-      </label>
+  <form id="contactForm">
+    <label for="firstname">Prénom :</label>
+    <input type="text" id="firstname" name="firstname" required>
 
-      <button type="submit">Envoyer</button>
-    </form>
+    <label for="lastname">Nom :</label>
+    <input type="text" id="lastname" name="lastname" required>
+
+    <label for="birthdate">Date de naissance :</label>
+    <input type="text" id="birthdate" name="birthdate" placeholder="JJ/MM/AAAA" required>
+
+    <label for="email">Adresse email :</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="phone">Numéro de téléphone :</label>
+    <input type="tel" id="phone" name="phone" placeholder="+33" required>
+
+    <label for="profil">Votre profil :</label>
+    <select id="profil" name="profil" required>
+      <option value="">Sélectionner</option>
+      <option>Indépendant</option>
+      <option>Etudiant.e</option>
+      <option>Parents d'étudiant.e</option>
+      <option>Fonctionnaire</option>
+      <option>Salarié.e</option>
+      <option>Retraité.e</option>
+      <option>Praticien</option>
+      <option>Chef d'entreprise</option>
+      <option>Chercheur d'emploi</option>
+      <option>Autre</option>
+    </select>
+
+    <label style="font-size: 0.85em; margin-top: 1em;">
+      <input type="checkbox" required>
+      En cliquant sur « obtenir mon tarif », vous acceptez de recevoir des communications emails et d’être potentiellement recontacté.e par notre équipe.
+    </label>
+
+    <button type="submit">Obtenir mon tarif</button>
     <div class="message" id="message"></div>
-  </div>
+  </form>
 
-  <div id="cookie-banner" class="cookie-banner">
+  <div id="cookie-banner" class="cookie-banner hidden">
     Ce site utilise des cookies à des fins de mesure et de personnalisation. Acceptez-vous ?
     <br><br>
     <button onclick="acceptCookies()">Accepter</button>
@@ -88,11 +144,14 @@
         fields: [
           { name: "firstname", value: form.firstname.value },
           { name: "lastname", value: form.lastname.value },
-          { name: "email", value: form.email.value }
+          { name: "birthdate", value: form.birthdate.value },
+          { name: "email", value: form.email.value },
+          { name: "phone", value: form.phone.value },
+          { name: "profil", value: form.profil.value }
         ],
         context: {
           pageUri: window.location.href,
-          pageName: "Formulaire RGPD"
+          pageName: "Formulaire RGPD - NostrumCare"
         }
       };
 
@@ -122,10 +181,9 @@
       } else if (consent === "true") {
         loadHubspotTracking();
       } else {
-        rejectCookies(); // En cas de "false", bien supprimer les cookies à chaque rechargement
+        rejectCookies();
       }
     };
   </script>
 </body>
 </html>
-
