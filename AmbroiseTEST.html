@@ -1,171 +1,99 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Mon devis en 1 minute</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulaire RGPD</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2em;
-      background-color: #fdf0e0;
+    body { font-family: Arial; padding: 2em; }
+    .cookie-banner {
+      position: fixed; bottom: 0; width: 100%; background: #eee;
+      padding: 1em; border-top: 1px solid #ccc; text-align: center;
     }
-
-    form {
-      max-width: 400px;
-      margin: auto;
-    }
-
-    h1 {
-      color: #6f1a7d;
-      font-size: 1.5em;
-    }
-
-    label {
-      display: block;
-      margin-top: 1em;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 0.6em;
-      margin-top: 0.3em;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-    }
-
-    button {
-      margin-top: 1.5em;
-      background-color: #f061a3;
-      color: white;
-      padding: 0.7em 1em;
-      font-weight: bold;
-      border: none;
-      border-radius: 25px;
-      width: 100%;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #e04991;
-    }
-
-    .message {
-      margin-top: 1em;
-      font-weight: bold;
-    }
-
-    .consent {
-      font-size: 0.85em;
-      margin-top: 1em;
-    }
+    .hidden { display: none; }
+    form label { display: block; margin-top: 1em; }
+    input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
+    button { margin-top: 1em; padding: 0.5em 1em; }
+    .message { margin-top: 1em; font-weight: bold; }
   </style>
 </head>
 <body>
+  <h1>Formulaire de contact</h1>
+  <div id="formulaire">
+    <form id="contactForm">
+      <label for="firstname">Prénom :</label>
+      <input type="text" id="firstname" name="firstname" required>
+      
+      <label for="lastname">Nom :</label>
+      <input type="text" id="lastname" name="lastname" required>
 
-  <form id="contactForm">
-    <h1>Mon devis en 1 minute</h1>
-    <p>Nous avons besoin de ces informations pour établir un tarif</p>
+      <label for="email">Email :</label>
+      <input type="email" id="email" name="email" required>
 
-    <label for="firstname">Prénom :</label>
-    <input type="text" id="firstname" name="firstname" required>
+      <label style="margin-top: 1em; font-size: 0.9em;">
+        <input type="checkbox" required>
+        En cliquant sur envoyer, vous autorisez Ambroise Training à stocker et traiter vos données.
+      </label>
 
-    <label for="lastname">Nom :</label>
-    <input type="text" id="lastname" name="lastname" required>
-
-    <label for="birthdate">Date de naissance :</label>
-    <input type="text" id="birthdate" name="birthdate" placeholder="JJ/MM/AAAA" required>
-
-    <label for="email">Adresse email :</label>
-    <input type="email" id="email" name="email" required>
-
-    <label for="phone">Numéro de téléphone :</label>
-    <input type="tel" id="phone" name="phone" placeholder="+33" required>
-
-    <label for="profil">Votre profil :</label>
-    <select id="profil" name="profil" required>
-      <option value="">Sélectionner</option>
-      <option>Indépendant</option>
-      <option>Etudiant.e</option>
-      <option>Parents d'étudiant.e</option>
-      <option>Fonctionnaire</option>
-      <option>Salarié.e</option>
-      <option>Retraité.e</option>
-      <option>Praticien</option>
-      <option>Chef d'entreprise</option>
-      <option>Chercheur d'emploi</option>
-      <option>Autre</option>
-    </select>
-
-    <label class="consent">
-      En cliquant sur « obtenir mon tarif », vous acceptez de recevoir des communications emails et d’être potentiellement recontacté.e par notre équipe. Cliquez <a href="#" target="_blank">ici</a> pour en savoir plus sur la gestion de vos données.
-    </label>
-
-    <button type="submit">Obtenir mon tarif</button>
+      <button type="submit">Envoyer</button>
+    </form>
     <div class="message" id="message"></div>
-  </form>
+  </div>
 
-  <!-- SDK Axeptio -->
-  <script>
-    window.axeptioSettings = {
-      clientId: "6880d227f0b041d2ff94a814",
-      cookiesVersion: "ambroisedu21/formulaire-consentement/indexaxeptio-fr-EU"
-    };
-    (function(d, s) {
-      var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
-      e.async = true; e.src = "//static.axept.io/sdk.js";
-      t.parentNode.insertBefore(e, t);
-    })(document, "script");
-  </script>
+  <div id="cookie-banner" class="cookie-banner">
+    Ce site utilise des cookies à des fins de mesure et de personnalisation. Acceptez-vous ?
+    <br><br>
+    <button onclick="acceptCookies()">Accepter</button>
+    <button onclick="rejectCookies()">Refuser</button>
+  </div>
 
-  <!-- Script Axeptio + injection HubSpot -->
   <script>
-    window._axcb = window._axcb || [];
-    window._axcb.push(function(axeptio) {
-      axeptio.on("cookies:complete", function(choices) {
-        if (choices && choices.hubspot) {
-          const script = document.createElement("script");
-          script.src = "https://js.hs-scripts.com/49153213.js";
-          script.type = "text/javascript";
-          script.async = true;
-          script.defer = true;
-          document.head.appendChild(script);
-        }
+    function deleteHubspotCookies() {
+      const cookies = ["hubspotutk", "__hssc", "__hssrc", "__hstc", "_cf_bm", "__cf_bm", "_cfuvid"];
+      cookies.forEach(c => {
+        document.cookie = `${c}=; Max-Age=0; path=/; domain=${location.hostname}`;
+        document.cookie = `${c}=; Max-Age=0; path=/; domain=.hubspot.com`;
       });
-    });
-  </script>
+    }
 
-  <!-- Envoi API HubSpot -->
-  <script>
+    function acceptCookies() {
+      localStorage.setItem("cookiesAccepted", "true");
+      loadHubspotTracking();
+      document.getElementById("cookie-banner").classList.add("hidden");
+    }
+
+    function rejectCookies() {
+      localStorage.setItem("cookiesAccepted", "false");
+      deleteHubspotCookies();
+      document.getElementById("cookie-banner").classList.add("hidden");
+    }
+
+    function loadHubspotTracking() {
+      if (!window.hubspotScriptLoaded) {
+        const script = document.createElement("script");
+        script.src = "https://js.hs-scripts.com/49153213.js";
+        script.type = "text/javascript";
+        script.defer = true;
+        document.head.appendChild(script);
+        window.hubspotScriptLoaded = true;
+      }
+    }
+
     document.getElementById("contactForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       const form = e.target;
-
-      let cookiesAccepted = false;
-      if (window._axcb && window._axcb.length > 0) {
-        try {
-          cookiesAccepted = await new Promise((resolve) => {
-            window._axcb.push((axeptio) => {
-              resolve(axeptio.getConsent("hubspot"));
-            });
-          });
-        } catch (e) {}
-      }
 
       const data = {
         fields: [
           { name: "firstname", value: form.firstname.value },
           { name: "lastname", value: form.lastname.value },
-          { name: "birthdate", value: form.birthdate.value },
-          { name: "email", value: form.email.value },
-          { name: "phone", value: form.phone.value },
-          { name: "profil", value: form.profil.value }
+          { name: "email", value: form.email.value }
         ],
-        context: cookiesAccepted ? {
+        context: {
           pageUri: window.location.href,
-          pageName: "Formulaire devis 1 min"
-        } : {}
+          pageName: "Formulaire RGPD"
+        }
       };
 
       const portalId = "49153213";
@@ -178,17 +106,26 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
-        if (res.ok) {
-          document.getElementById("message").textContent = "Formulaire envoyé avec succès !";
-          form.reset();
-        } else {
-          document.getElementById("message").textContent = "Erreur lors de l'envoi.";
-        }
-      } catch (err) {
+        document.getElementById("message").textContent = res.ok
+          ? "Formulaire envoyé avec succès !"
+          : "Erreur lors de l'envoi.";
+        if (res.ok) form.reset();
+      } catch {
         document.getElementById("message").textContent = "Erreur réseau.";
       }
     });
-  </script>
 
+    window.onload = () => {
+      const consent = localStorage.getItem("cookiesAccepted");
+      if (!consent) {
+        document.getElementById("cookie-banner").classList.remove("hidden");
+      } else if (consent === "true") {
+        loadHubspotTracking();
+      } else {
+        rejectCookies(); // En cas de "false", bien supprimer les cookies à chaque rechargement
+      }
+    };
+  </script>
 </body>
 </html>
+
