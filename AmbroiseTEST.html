@@ -119,7 +119,7 @@
     })(document, "script");
   </script>
 
-  <!-- Contrôle Axeptio + HubSpot -->
+  <!-- Script Axeptio + injection HubSpot -->
   <script>
     window._axcb = window._axcb || [];
     window._axcb.push(function(axeptio) {
@@ -136,7 +136,7 @@
     });
   </script>
 
-  <!-- Soumission API HubSpot -->
+  <!-- Envoi API HubSpot -->
   <script>
     document.getElementById("contactForm").addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -169,7 +169,7 @@
       };
 
       const portalId = "49153213";
-      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047"; // Remplace ici
+      const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
       const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
 
       try {
@@ -189,5 +189,6 @@
       }
     });
   </script>
+
 </body>
 </html>
