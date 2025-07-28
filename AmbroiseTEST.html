@@ -158,6 +158,7 @@
       const portalId = "49153213";
       const formId = "1262a4d1-1496-4553-b70d-64bc1e676047";
       const url = `https://api.hsforms.com/submissions/v3/integration/submit/${portalId}/${formId}`;
+      console.log(data);
 
       try {
         const res = await fetch(url, {
